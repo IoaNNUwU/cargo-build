@@ -30,7 +30,7 @@ pub fn rerun_if_changed(file_paths: impl IntoIterator<Item = impl AsRef<Path>>) 
     for file_path in file_paths {
         let file_path = file_path.as_ref().display();
         write!(&CARGO_BUILD_OUT, "cargo::rerun-if-changed={file_path}")
-            .expect("Unable to write to cargo_build:CARGO_BUILD_OUT");
+            .expect("Unable to write to cargo_build::CARGO_BUILD_OUT");
     }
 }
 
@@ -53,7 +53,7 @@ pub fn rerun_if_changed(file_paths: impl IntoIterator<Item = impl AsRef<Path>>) 
 pub fn rerun_if_env_changed<'a>(env_vars: impl IntoIterator<Item = &'a str>) {
     for env_var in env_vars {
         write!(&CARGO_BUILD_OUT, "cargo::rerun-if-env-changed={env_var}")
-            .expect("Unable to write to cargo_build:CARGO_BUILD_OUT");
+            .expect("Unable to write to cargo_build::CARGO_BUILD_OUT");
     }
 }
 
@@ -84,7 +84,7 @@ pub fn rerun_if_env_changed<'a>(env_vars: impl IntoIterator<Item = &'a str>) {
 pub fn rustc_link_arg<'a>(flags: impl IntoIterator<Item = &'a str>) {
     for flag in flags {
         write!(&CARGO_BUILD_OUT, "cargo::rustc-link-arg={flag}")
-            .expect("Unable to write to cargo_build:CARGO_BUILD_OUT");
+            .expect("Unable to write to cargo_build::CARGO_BUILD_OUT");
     }
 }
 
@@ -111,7 +111,7 @@ pub fn rustc_link_arg<'a>(flags: impl IntoIterator<Item = &'a str>) {
 pub fn rustc_link_arg_cdylib<'a>(flags: impl IntoIterator<Item = &'a str>) {
     for flag in flags {
         write!(&CARGO_BUILD_OUT, "cargo::rustc-link-arg-cdylib={flag}")
-            .expect("Unable to write to cargo_build:CARGO_BUILD_OUT");
+            .expect("Unable to write to cargo_build::CARGO_BUILD_OUT");
     }
 }
 
@@ -139,7 +139,7 @@ pub fn rustc_link_arg_cdylib<'a>(flags: impl IntoIterator<Item = &'a str>) {
 pub fn rustc_link_arg_bin<'b, 'f>(bin: &'b str, flags: impl IntoIterator<Item = &'f str>) {
     for flag in flags {
         write!(&CARGO_BUILD_OUT, "cargo::rustc-link-arg-bin={bin}={flag}")
-            .expect("Unable to write to cargo_build:CARGO_BUILD_OUT");
+            .expect("Unable to write to cargo_build::CARGO_BUILD_OUT");
     }
 }
 
@@ -164,7 +164,7 @@ pub fn rustc_link_arg_bin<'b, 'f>(bin: &'b str, flags: impl IntoIterator<Item = 
 pub fn rustc_link_arg_bins<'a>(flags: impl IntoIterator<Item = &'a str>) {
     for flag in flags {
         write!(&CARGO_BUILD_OUT, "cargo::rustc-link-arg-bins={flag}")
-            .expect("Unable to write to cargo_build:CARGO_BUILD_OUT");
+            .expect("Unable to write to cargo_build::CARGO_BUILD_OUT");
     }
 }
 
@@ -189,7 +189,7 @@ pub fn rustc_link_arg_bins<'a>(flags: impl IntoIterator<Item = &'a str>) {
 pub fn rustc_link_arg_tests<'a>(flags: impl IntoIterator<Item = &'a str>) {
     for flag in flags {
         write!(&CARGO_BUILD_OUT, "cargo::rustc-link-arg-tests={flag}")
-            .expect("Unable to write to cargo_build:CARGO_BUILD_OUT");
+            .expect("Unable to write to cargo_build::CARGO_BUILD_OUT");
     }
 }
 
@@ -214,7 +214,7 @@ pub fn rustc_link_arg_tests<'a>(flags: impl IntoIterator<Item = &'a str>) {
 pub fn rustc_link_arg_examples<'a>(flags: impl IntoIterator<Item = &'a str>) {
     for flag in flags {
         write!(&CARGO_BUILD_OUT, "cargo::rustc-link-arg-examples={flag}")
-            .expect("Unable to write to cargo_build:CARGO_BUILD_OUT");
+            .expect("Unable to write to cargo_build::CARGO_BUILD_OUT");
     }
 }
 
@@ -239,7 +239,7 @@ pub fn rustc_link_arg_examples<'a>(flags: impl IntoIterator<Item = &'a str>) {
 pub fn rustc_link_arg_benches<'a>(flags: impl IntoIterator<Item = &'a str>) {
     for flag in flags {
         write!(&CARGO_BUILD_OUT, "cargo::rustc-link-arg-benches={flag}")
-            .expect("Unable to write to cargo_build:CARGO_BUILD_OUT");
+            .expect("Unable to write to cargo_build::CARGO_BUILD_OUT");
     }
 }
 
@@ -270,7 +270,7 @@ pub fn rustc_link_arg_benches<'a>(flags: impl IntoIterator<Item = &'a str>) {
 pub fn rustc_link_lib<'a>(libs: impl IntoIterator<Item = &'a str>) {
     for lib in libs {
         write!(&CARGO_BUILD_OUT, "cargo::rustc-link-lib={lib}")
-            .expect("Unable to write to cargo_build:CARGO_BUILD_OUT");
+            .expect("Unable to write to cargo_build::CARGO_BUILD_OUT");
     }
 }
 
@@ -299,29 +299,131 @@ pub fn rustc_link_search(paths: impl IntoIterator<Item = impl AsRef<Path>>) {
     for path in paths {
         let path = path.as_ref().display();
         write!(&CARGO_BUILD_OUT, "cargo::rustc-link-search={path}")
-            .expect("Unable to write to cargo_build:CARGO_BUILD_OUT");
+            .expect("Unable to write to cargo_build::CARGO_BUILD_OUT");
     }
 }
 
 /// Passes certain flags to the compiler.
 ///
-/// The `rustc-flags` instruction tells Cargo to pass the given space-separated flags to the compiler. 
+/// The `rustc-flags` instruction tells Cargo to pass the given space-separated flags to the compiler.
 /// This only allows the `-l` and `-L` flags, and is equivalent to using [`rustc_link_lib`] and [`rustc_link_search`].
 ///
 /// ```rust
-/// cargo_build::rustc_link_lib(["nghttp2", "libssl", "libcrypto"]);
+/// cargo_build::rustc_flags(["-l ffi -l ncursesw -l c++ -l z"]);
 ///
-/// cargo_build::rustc_link_lib([
-///     "nghttp2",
-///     "static=libssl",
-///     "dylib=libcrypto",
-///     "static:+whole-archive=mylib:renamed_lib",
+/// cargo_build::rustc_flags([
+///     "-l ffi",
+///     "-l ncursesw",
+///     "-l stdc++",
+///     "-l z"
 /// ]);
 /// ```
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-flags>
 pub fn rustc_flags<'a>(flags: impl IntoIterator<Item = &'a str>) {
     for flag in flags {
         write!(&CARGO_BUILD_OUT, "cargo::rustc-flags={flag}")
-            .expect("Unable to write to cargo_build:CARGO_BUILD_OUT");
+            .expect("Unable to write to cargo_build::CARGO_BUILD_OUT");
+    }
+}
+
+/// Sets compile-time `cfg` settings.
+///
+/// To register `cfg` options see [`rustc_check_cfg`].
+///
+/// The `rustc-cfg` instruction tells Cargo to pass the given value to the
+/// [`--cfg` flag](https://doc.rust-lang.org/rustc/command-line-arguments.html#option-cfg) to the compiler.
+/// This may be used for compile-time detection of features to enable
+/// [conditional compilation](https://doc.rust-lang.org/reference/conditional-compilation.html).
+///
+/// ### Custom cfgs must either be expected using the [`rustc_check_cfg`] instruction
+/// or usage will need to allow the unexpected_cfgs lint to avoid
+/// [unexpected cfgs](https://doc.rust-lang.org/rustc/lints/listing/warn-by-default.html#unexpected-cfgs) warnings.
+///
+/// Note that this does not affect Cargo’s dependency resolution. This cannot be used to enable an optional
+/// dependency, or enable other Cargo features.
+///
+/// Be aware that [Cargo features](https://doc.rust-lang.org/cargo/reference/features.html)
+/// use the form `feature="foo"`. `cfg` values passed with this flag are not restricted
+/// to that form, and may provide just a single identifier, or any arbitrary key/value pair. For example, emitting
+/// `cargo::rustc-cfg=abc` will then allow code to use `#[cfg(abc)]` (note the lack of `feature=`). Or an arbitrary
+/// key/value pair may be used with an `=` symbol like `cargo::rustc-cfg=my_component="foo"`. The key should be a Rust
+/// identifier, the value should be a string.
+///
+/// #### Example: Set `cfg` option when environment variable is present:
+/// ```rust
+/// // build.rs
+/// cargo_build::rustc_check_cfg(["cuda"]);
+///
+/// if std::env::var("CUDA_PATH").is_ok() {
+///     cargo_build::rustc_cfg(["cuda"]);
+/// }
+/// // main.rs
+/// #[cfg(cuda)]
+/// mod cuda;
+/// ```
+pub fn rustc_cfg<'a>(flags: impl IntoIterator<Item = &'a str>) {
+    for flag in flags {
+        write!(&CARGO_BUILD_OUT, "cargo::rustc-flags={flag}")
+            .expect("Unable to write to cargo_build::CARGO_BUILD_OUT");
+    }
+}
+
+/// Register custom `cfg`s as expected for compile-time checking of configs.
+///
+/// To set `cfg` options see [`rustc_cfg`].
+///
+/// Add to the list of expected config names and values that is used when checking the reachable cfg
+/// expressions with the
+/// [unexpected_cfgs](https://doc.rust-lang.org/rustc/lints/listing/warn-by-default.html#unexpected-cfgs) lint.
+///
+/// The syntax of `CHECK_CFG` mirrors the rustc
+/// [`--check-cfg` flag](https://doc.rust-lang.org/rustc/command-line-arguments.html#option-check-cfg), see
+/// Checking conditional configurations for more details.
+///
+/// #### Example: Allow custom `cfg` option, then set it when environment variable is present:
+/// ```rust
+/// // build.rs
+/// cargo_build::rustc_check_cfg(["cuda"]);
+///
+/// if std::env::var("CUDA_PATH").is_ok() {
+///     cargo_build::rustc_cfg(["cuda"]);
+/// }
+/// // main.rs
+/// #[cfg(cuda)]
+/// mod cuda;
+/// ```
+///
+/// #### Example: Declare all `cfg` options and select 1.
+/// TODO: Check if this works and HOW.
+/// ```rust
+/// // build.rs
+/// cargo_build::rustc_check_cfg(["cfg(api_v1, api_v2)"]);
+/// 
+/// cargo_build::rustc_cfg("cfg(api_v1)");
+/// 
+/// // main.rs
+/// #[cfg(api_v1)]
+/// fn get_cities() -> Vec<String> { todo!() }
+/// #[cfg(api_v2)]
+/// fn get_cities() -> Vec<String> { todo!() }
+/// ```
+/// 
+/// #### Example: Declare custom `cfg` option with .
+/// ```rust
+/// // build.rs
+/// cargo_build::rustc_check_cfg(["cfg(api_v1, api_v2)"]);
+/// 
+/// cargo_build::rustc_cfg("cfg(api_v1)");
+/// 
+/// // main.rs
+/// #[cfg(api_v1)]
+/// fn get_cities() -> Vec<String> { todo!() }
+/// #[cfg(api_v2)]
+/// fn get_cities() -> Vec<String> { todo!() }
+/// ```
+pub fn rustc_check_cfg<'a>(flags: impl IntoIterator<Item = &'a str>) {
+    for flag in flags {
+        write!(&CARGO_BUILD_OUT, "cargo::rustc-flags={flag}")
+            .expect("Unable to write to cargo_build::CARGO_BUILD_OUT");
     }
 }
