@@ -480,11 +480,11 @@ pub fn rustc_flags<'a>(flags: impl IntoIterator<Item = &'a str>) {
 ///
 /// #### Register `cfg` options with [`rustc_check_cfg`] to avoid `unexpected_cfgs` warnings.
 ///
-/// Import [`RustcCfgValue`] trait to be able to call [`RustcCfgValue::value`] on [`str`]:
+/// Import [`StrExtCfg`] trait to be able to call [`StrExtCfg::value`] on [`str`]:
 ///
 /// ```rust
 /// // build.rs
-/// use cargo_build::StrExtRustcCfg;
+/// use cargo_build::StrExtCfg;
 ///
 /// cargo_build::rustc_check_cfg("api_version", ["1", "2", "3"]);
 /// cargo_build::rustc_cfg("api_version".value("1"));
@@ -540,7 +540,7 @@ pub fn rustc_flags<'a>(flags: impl IntoIterator<Item = &'a str>) {
 /// #### Example: Set range of custom `cfg` options:
 /// ```rust
 /// // build.rs
-/// use cargo_build::StrExtRustcCfg;
+/// use cargo_build::StrExtCfg;
 ///
 /// cargo_build::rustc_check_cfg("api_version", ["1", "2", "3"]);
 /// cargo_build::rustc_cfg("api_version".value("1"));
@@ -573,11 +573,11 @@ pub fn rustc_cfg<'a>(cfg: impl Into<RustcCfg<'a>>) {
 
 /// Helper struct for [`rustc_cfg`] function.
 ///
-/// Import [`RustcCfgValue`] trait to be able to call [`RustcCfgValue::value`] on [`str`]:
+/// Import [`StrExtCfg`] trait to be able to call [`StrExtCfg::value`] on [`str`]:
 ///
 /// ```rust
 /// // build.rs
-/// use cargo_build::StrExtRustcCfg;
+/// use cargo_build::StrExtCfg;
 ///
 /// cargo_build::rustc_check_cfg("api_version", ["1", "2", "3"]);
 ///
@@ -616,21 +616,21 @@ pub fn cfg<'a>(name: &'a str, value: Option<&'a str>) -> RustcCfg<'a> {
 
 /// Helper trait for [`rustc_cfg`] function.
 ///
-/// Import this trait to be able to call [`RustcCfgValue::value`] on [`str`]:
+/// Import this trait to be able to call [`StrExtCfg::value`] on [`str`]:
 ///
 /// ```rust
 /// // build.rs
-/// use cargo_build::StrExtRustcCfg;
+/// use cargo_build::StrExtCfg;
 ///
 /// cargo_build::rustc_check_cfg("api_version", ["1", "2", "3"]);
 ///
 /// cargo_build::rustc_cfg("api_version".value("1"));
 /// ```
-pub trait StrExtRustcCfg<'a> {
+pub trait StrExtCfg<'a> {
     fn value(&'a self, value: &'a str) -> RustcCfg<'a>;
 }
 
-impl<'a> StrExtRustcCfg<'a> for &'a str {
+impl<'a> StrExtCfg<'a> for &'a str {
     fn value(&'a self, value: &'a str) -> RustcCfg<'a> {
         let mut cfg: RustcCfg = (*self).into();
         cfg.value = Some(value);
@@ -685,7 +685,7 @@ impl<'a> StrExtRustcCfg<'a> for &'a str {
 /// // build.rs
 /// cargo_build::rustc_check_cfg("api_version", ["1", "2", "3"]);
 ///
-/// use cargo_build::StrExtRustcCfg;
+/// use cargo_build::StrExtCfg;
 /// cargo_build::rustc_cfg("api_version".value("1"));
 ///
 /// // main.rs

@@ -312,7 +312,7 @@ fn rustc_cfg_test_value() {
 
     cargo_build::cargo_build_out::set(vec_out.clone());
 
-    use cargo_build::StrExtRustcCfg;
+    use cargo_build::StrExtCfg;
 
     cargo_build::rustc_cfg("api_version".value("1"));
 
