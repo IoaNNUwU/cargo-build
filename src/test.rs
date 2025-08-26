@@ -39,7 +39,7 @@ mod functions_tests {
 
         {
             let out: &[u8] = &vec_out.0.read().expect("Unable to aquire Read lock");
-            assert_eq!(out, b"cargo::rerun-if-changed=LICENSE.md");
+            assert_eq!(out, b"cargo::rerun-if-changed=LICENSE.md\n");
         }
 
         // Reset CARGO_BUILD_OUT and try again

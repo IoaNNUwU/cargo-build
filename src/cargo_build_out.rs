@@ -3,7 +3,8 @@ use std::{
     sync::{LazyLock, RwLock},
 };
 
-/// Use this static variable to change `cargo-build` commands output. Defaults to `stdout`.
+/// Use this static variable to change `cargo-build` commands output. Defaults to `stdout` - this way
+/// cargo commands work inside `build.rs`.
 ///
 /// Useful for debugging and logging.
 ///
@@ -20,7 +21,7 @@ use std::{
 /// let file_contents = std::fs::read_to_string("target/build_output_test.txt")
 ///                                 .expect("Unable to read file");
 ///
-/// assert_eq!(&file_contents, "cargo::rerun-if-changed=README.md")
+/// assert_eq!(&file_contents, "cargo::rerun-if-changed=README.md\n")
 /// ```
 ///
 /// ### Example `Vec` output
@@ -46,7 +47,7 @@ use std::{
 ///
 /// let vec_contents: &[u8] = &write_vec.0.lock().unwrap();
 ///
-/// assert_eq!(vec_contents, b"cargo::rerun-if-changed=README.md")
+/// assert_eq!(vec_contents, b"cargo::rerun-if-changed=README.md\n")
 /// ```
 pub static CARGO_BUILD_OUT: CargoBuildOut =
     CargoBuildOut(LazyLock::new(|| RwLock::new(Box::new(std::io::stdout()))));

@@ -46,13 +46,10 @@
 //! `warning` and `error` macros, which have the same signature as `println!` macro to support
 //! compile-time checks for arguments count.
 
-#[cfg(feature = "macros")]
 mod macros;
 // pub use macros::*; is not needed because #[macro_export] exports them from crate root
 
-#[cfg(feature = "functions")]
 mod functions;
-#[cfg(feature = "functions")]
 pub use functions::*;
 
 mod cargo_build_out;
