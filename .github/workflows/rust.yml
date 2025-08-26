@@ -10,8 +10,8 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
 
+  build-linux:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,7 +24,9 @@ jobs:
       env:
         RUSTFLAGS: "-D warnings"
       run: cargo clippy --verbose
-      
+
+  
+  build-windows:
     runs-on: windows-latest
 
     steps:
@@ -37,7 +39,10 @@ jobs:
       env:
         RUSTFLAGS: "-D warnings"
       run: cargo clippy --verbose
-      
+
+  
+  build-macos:
+
     runs-on: macos-latest
 
     steps:
@@ -50,4 +55,3 @@ jobs:
       env:
         RUSTFLAGS: "-D warnings"
       run: cargo clippy --verbose
-
