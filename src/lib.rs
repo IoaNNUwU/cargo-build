@@ -1,6 +1,6 @@
 //! ## Cargo build
 //!
-//! ##### `cargo-build` is a wrapper around cargo instructions accesible in `build.rs`
+//! #### `cargo-build` is a wrapper around cargo instructions accesible in `build.rs`
 //!
 //! <https://doc.rust-lang.org/cargo/reference/build-scripts.html>
 //!
