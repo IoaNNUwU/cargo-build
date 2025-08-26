@@ -1,7 +1,6 @@
 use std::{
-    cell::{LazyCell, RefCell},
+    cell::RefCell,
     io::{stdout, Write},
-    sync::{LazyLock, Mutex},
 };
 
 thread_local! {
