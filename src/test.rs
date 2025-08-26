@@ -19,11 +19,9 @@ impl Write for &TestWriteVec {
     }
 }
 
-#[cfg(feature = "macros")]
 #[cfg(test)]
 mod macro_tests {}
 
-#[cfg(feature = "functions")]
 #[cfg(test)]
 mod functions_tests {
 
