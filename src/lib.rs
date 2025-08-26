@@ -52,8 +52,10 @@ mod macros;
 mod functions;
 pub use functions::*;
 
-mod cargo_build_out;
-pub use cargo_build_out::{CargoBuildOut, CARGO_BUILD_OUT};
+pub mod cargo_build_out;
 
 #[cfg(test)]
-mod test;
+mod functions_test;
+
+#[cfg(test)]
+mod macros_test;

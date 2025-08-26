@@ -1,3 +1,3 @@
 # cargo-build
 
-> MSRV: Rust 1.77 is is required for `cargo::KEY=VALUE` syntax.
+> MSRV: Rust 1.84 is is required for `cargo::error=` syntax.
