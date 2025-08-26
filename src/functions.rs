@@ -677,9 +677,9 @@ pub fn rustc_check_cfgs<'a>(names: impl IntoIterator<Item = &'a str>) {
 
 /// Empty iterator alias to be more descriptive in [`rustc_check_cfg`]
 #[allow(non_upper_case_globals)]
-pub const NoValues: [&'static str; 0] = [];
+pub const NoValues: [&str; 0] = [];
 
 /// Sets an environment variable
-pub fn rustc_env(var: &str, value: &str) {
-
+pub fn rustc_env(_var: &str, _value: &str) {
+    todo!();
 }
