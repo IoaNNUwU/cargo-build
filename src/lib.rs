@@ -58,14 +58,13 @@
 //!
 //! - Faster compile times and easier code
 
-#[cfg(feature="macros")]
 mod macros;
 // pub use macros::*; is not needed because #[macro_export] exports them from crate root
 
 mod functions;
 pub use functions::*;
 
-pub mod cargo_build_out;
+pub mod build_out;
 
 #[cfg(test)]
 mod functions_test;

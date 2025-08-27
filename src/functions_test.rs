@@ -9,7 +9,7 @@ use crate as cargo_build;
 fn change_output_test() {
     let vec_out = TestWriteVecHandle::new();
 
-    cargo_build::cargo_build_out::set(vec_out.clone());
+    cargo_build::build_out::set(vec_out.clone());
 
     cargo_build::rerun_if_changed(["LICENSE.md", "README.md"]);
 
@@ -32,7 +32,7 @@ fn change_output_test() {
         .expect("Unable to aquire Write lock")
         .clear();
 
-    cargo_build::cargo_build_out::reset();
+    cargo_build::build_out::reset();
 
     cargo_build::rerun_if_changed(["LICENSE.md"]);
 
@@ -45,7 +45,7 @@ fn change_output_test() {
 fn rerun_if_changed_test() {
     let vec_out = TestWriteVecHandle::new();
 
-    cargo_build::cargo_build_out::set(vec_out.clone());
+    cargo_build::build_out::set(vec_out.clone());
 
     cargo_build::rerun_if_changed(["LICENSE.md", "README.md"]);
 
@@ -64,7 +64,7 @@ fn rerun_if_changed_test() {
 fn rerun_if_env_changed_test() {
     let vec_out = TestWriteVecHandle::new();
 
-    cargo_build::cargo_build_out::set(vec_out.clone());
+    cargo_build::build_out::set(vec_out.clone());
 
     cargo_build::rerun_if_env_changed(["VAR1", "VAR2"]);
 
@@ -83,7 +83,7 @@ fn rerun_if_env_changed_test() {
 fn rustc_link_arg_test() {
     let vec_out = TestWriteVecHandle::new();
 
-    cargo_build::cargo_build_out::set(vec_out.clone());
+    cargo_build::build_out::set(vec_out.clone());
 
     cargo_build::rustc_link_arg(["-mlongcalls", "-ffunction-sections", "-Wl,--cref"]);
 
@@ -103,7 +103,7 @@ fn rustc_link_arg_test() {
 fn rustc_link_arg_cdylib_test() {
     let vec_out = TestWriteVecHandle::new();
 
-    cargo_build::cargo_build_out::set(vec_out.clone());
+    cargo_build::build_out::set(vec_out.clone());
 
     cargo_build::rustc_link_arg_cdylib(["-mlongcalls", "-ffunction-sections", "-Wl,--cref"]);
 
@@ -123,7 +123,7 @@ fn rustc_link_arg_cdylib_test() {
 fn rustc_link_arg_bin_test() {
     let vec_out = TestWriteVecHandle::new();
 
-    cargo_build::cargo_build_out::set(vec_out.clone());
+    cargo_build::build_out::set(vec_out.clone());
 
     cargo_build::rustc_link_arg_bin("server", ["-Wl,--cref"]);
 
@@ -149,7 +149,7 @@ fn rustc_link_arg_bin_test() {
 fn rustc_link_arg_bins_test() {
     let vec_out = TestWriteVecHandle::new();
 
-    cargo_build::cargo_build_out::set(vec_out.clone());
+    cargo_build::build_out::set(vec_out.clone());
 
     cargo_build::rustc_link_arg_bins(["-mlongcalls", "-ffunction-sections", "-Wl,--cref"]);
 
@@ -169,7 +169,7 @@ fn rustc_link_arg_bins_test() {
 fn rustc_link_arg_tests_test() {
     let vec_out = TestWriteVecHandle::new();
 
-    cargo_build::cargo_build_out::set(vec_out.clone());
+    cargo_build::build_out::set(vec_out.clone());
 
     cargo_build::rustc_link_arg_tests(["-mlongcalls", "-ffunction-sections", "-Wl,--cref"]);
 
@@ -189,7 +189,7 @@ fn rustc_link_arg_tests_test() {
 fn rustc_link_arg_examples_test() {
     let vec_out = TestWriteVecHandle::new();
 
-    cargo_build::cargo_build_out::set(vec_out.clone());
+    cargo_build::build_out::set(vec_out.clone());
 
     cargo_build::rustc_link_arg_examples(["-mlongcalls", "-ffunction-sections", "-Wl,--cref"]);
 
@@ -209,7 +209,7 @@ fn rustc_link_arg_examples_test() {
 fn rustc_link_arg_benches_test() {
     let vec_out = TestWriteVecHandle::new();
 
-    cargo_build::cargo_build_out::set(vec_out.clone());
+    cargo_build::build_out::set(vec_out.clone());
 
     cargo_build::rustc_link_arg_benches(["-mlongcalls", "-ffunction-sections", "-Wl,--cref"]);
 
@@ -229,7 +229,7 @@ fn rustc_link_arg_benches_test() {
 fn rustc_link_lib_test() {
     let vec_out = TestWriteVecHandle::new();
 
-    cargo_build::cargo_build_out::set(vec_out.clone());
+    cargo_build::build_out::set(vec_out.clone());
 
     cargo_build::rustc_link_lib(["nghttp2", "libssl", "libcrypto"]);
 
@@ -249,7 +249,7 @@ fn rustc_link_lib_test() {
 fn rustc_link_search_test() {
     let vec_out = TestWriteVecHandle::new();
 
-    cargo_build::cargo_build_out::set(vec_out.clone());
+    cargo_build::build_out::set(vec_out.clone());
 
     cargo_build::rustc_link_search(["common_libs"]);
 
@@ -271,7 +271,7 @@ fn rustc_link_search_test() {
 fn rustc_flags_test() {
     let vec_out = TestWriteVecHandle::new();
 
-    cargo_build::cargo_build_out::set(vec_out.clone());
+    cargo_build::build_out::set(vec_out.clone());
 
     cargo_build::rustc_flags(["-L libs", "-L common_libs"]);
 
@@ -296,7 +296,7 @@ fn rustc_flags_test() {
 fn rustc_cfg_test_no_value() {
     let vec_out = TestWriteVecHandle::new();
 
-    cargo_build::cargo_build_out::set(vec_out.clone());
+    cargo_build::build_out::set(vec_out.clone());
 
     cargo_build::rustc_cfg("api_v1");
 
@@ -310,7 +310,7 @@ fn rustc_cfg_test_no_value() {
 fn rustc_cfg_test_value() {
     let vec_out = TestWriteVecHandle::new();
 
-    cargo_build::cargo_build_out::set(vec_out.clone());
+    cargo_build::build_out::set(vec_out.clone());
 
     use cargo_build::StrExtCfg;
 
@@ -326,7 +326,7 @@ fn rustc_cfg_test_value() {
 fn rustc_cfg_test_value_cfg() {
     let vec_out = TestWriteVecHandle::new();
 
-    cargo_build::cargo_build_out::set(vec_out.clone());
+    cargo_build::build_out::set(vec_out.clone());
 
     use cargo_build::cfg;
     
@@ -342,7 +342,7 @@ fn rustc_cfg_test_value_cfg() {
 fn rustc_check_cfg_test_no_values() {
     let vec_out = TestWriteVecHandle::new();
 
-    cargo_build::cargo_build_out::set(vec_out.clone());
+    cargo_build::build_out::set(vec_out.clone());
 
     cargo_build::rustc_check_cfg("api_version", []);
 
@@ -357,7 +357,7 @@ fn rustc_check_cfg_test_no_values() {
 fn rustc_check_cfg_test_single_value() {
     let vec_out = TestWriteVecHandle::new();
 
-    cargo_build::cargo_build_out::set(vec_out.clone());
+    cargo_build::build_out::set(vec_out.clone());
 
     cargo_build::rustc_check_cfg("api_version", ["1"]);
 
@@ -374,7 +374,7 @@ fn rustc_check_cfg_test_single_value() {
 fn rustc_check_cfg_test_many_values() {
     let vec_out = TestWriteVecHandle::new();
 
-    cargo_build::cargo_build_out::set(vec_out.clone());
+    cargo_build::build_out::set(vec_out.clone());
 
     cargo_build::rustc_check_cfg("api_version", ["1", "2", "3"]);
 
@@ -391,7 +391,7 @@ fn rustc_check_cfg_test_many_values() {
 fn rustc_env_test() {
     let vec_out = TestWriteVecHandle::new();
 
-    cargo_build::cargo_build_out::set(vec_out.clone());
+    cargo_build::build_out::set(vec_out.clone());
 
     cargo_build::rustc_env("GIT_HASH", "1234");
 

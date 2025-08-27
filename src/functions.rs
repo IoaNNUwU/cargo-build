@@ -1,8 +1,8 @@
-use super::cargo_build_out::CARGO_BUILD_OUT;
+use super::build_out::CARGO_BUILD_OUT;
 use std::io::Write;
 use std::path::Path;
 
-const ERR_MSG: &str = "Unable to write to cargo_build::CARGO_BUILD_OUT";
+const ERR_MSG: &str = "Unable to write to CARGO_BUILD_OUT";
 
 /// Tells Cargo to re-run the build script if file with given name changes.
 ///
@@ -10,7 +10,7 @@ const ERR_MSG: &str = "Unable to write to cargo_build::CARGO_BUILD_OUT";
 /// cargo_build::rerun_if_changed(["LICENSE.md", "README.md"]);
 /// cargo_build::rerun_if_changed(["docs_folder"]);
 ///
-/// cargo_build::rerun_if_changed(["src/main.rs"]);
+/// cargo_build::rerun_if_changed(["src/main.c"]);
 /// ```
 ///
 /// The `rerun-if-changed` instruction tells Cargo to re-run the build script if the file at
@@ -21,7 +21,7 @@ const ERR_MSG: &str = "Unable to write to cargo_build::CARGO_BUILD_OUT";
 /// If the path points to a directory, it will scan the entire directory for any modifications.
 ///
 /// If the build script inherently does not need to re-run under any circumstance, then using
-/// `cargo_build::rerun_if_changed("build.rs")` is a simple way to prevent it from being re-run
+/// `cargo_build::rerun_if_changed(["build.rs"])` is a simple way to prevent it from being re-run
 /// (otherwise, the default if no `rerun-if` instructions are emitted is to scan the entire
 /// package directory for changes). Cargo automatically handles whether or not the script itself
 /// needs to be recompiled, and of course the script will be re-run after it has been recompiled.
@@ -63,14 +63,6 @@ pub fn rerun_if_env_changed<'a>(env_vars: impl IntoIterator<Item = &'a str>) {
 
 /// Passes custom flags to a linker for benchmarks, binaries, `cdylib` crates, examples, and tests.
 ///
-/// The `rustc-link-arg` instruction tells Cargo to pass the
-/// [`-C link-arg=FLAG` option](https://doc.rust-lang.org/rustc/codegen-options/index.html#link-arg)
-/// to the compiler, but only when building supported targets (benchmarks,
-/// binaries, cdylib crates, examples, and tests). Its usage is highly platform specific.
-/// It is useful to set the shared library version or linker script.
-///
-/// ### Examples
-///
 /// ```rust
 /// cargo_build::rustc_link_arg(["-mlongcalls", "-ffunction-sections"]);
 /// cargo_build::rustc_link_arg(["-Wl,--cref"]);
@@ -83,6 +75,12 @@ pub fn rerun_if_env_changed<'a>(env_vars: impl IntoIterator<Item = &'a str>) {
 ///     ]);
 /// }
 /// ```
+/// 
+/// The `rustc-link-arg` instruction tells Cargo to pass the
+/// [`-C link-arg=FLAG` option](https://doc.rust-lang.org/rustc/codegen-options/index.html#link-arg)
+/// to the compiler, but only when building supported targets (benchmarks,
+/// binaries, cdylib crates, examples, and tests). Its usage is highly platform specific.
+/// It is useful to set the shared library version or linker script.
 ///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-arg>
 pub fn rustc_link_arg<'a>(flags: impl IntoIterator<Item = &'a str>) {
@@ -93,6 +91,14 @@ pub fn rustc_link_arg<'a>(flags: impl IntoIterator<Item = &'a str>) {
 }
 
 /// Passes custom flags to a linker for `cdylib` crates.
+/// 
+/// ```rust
+/// cargo_build::rustc_link_arg_cdylib([
+///         "-mlongcalls",
+///         "-ffunction-sections",
+///         "-Wl,--cref",
+/// ]);
+/// ```
 ///
 /// The `rustc-link-arg-cdylib` instruction tells Cargo to pass the
 /// [`-C link-arg=FLAG` option](https://doc.rust-lang.org/rustc/codegen-options/index.html#link-arg)
@@ -102,16 +108,6 @@ pub fn rustc_link_arg<'a>(flags: impl IntoIterator<Item = &'a str>) {
 /// If you want to pass flags for all supported targets see [`rustc_link_arg`]
 ///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-cdylib-link-arg>
-///
-/// ### Examples
-///
-/// ```rust
-/// cargo_build::rustc_link_arg_cdylib([
-///         "-mlongcalls",
-///         "-ffunction-sections",
-///         "-Wl,--cref",
-/// ]);
-/// ```
 pub fn rustc_link_arg_cdylib<'a>(flags: impl IntoIterator<Item = &'a str>) {
     for flag in flags {
         CARGO_BUILD_OUT.with(|out| {
