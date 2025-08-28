@@ -9,12 +9,12 @@
 //! 
 //! Benefits:
 //! - Less code.
-//! - Easier to modify.
+//! - Easier to modify later.
 //! - Harder to make typos.
 //!
 //! #### With `cargo-build`:
 //! ```rust
-//! cargo_build::rustc_link_arg_bin("server", ["-Wl,--cref"]);
+//! cargo_build::rustc_link_arg_bin("server", "-Wl,--cref");
 //! 
 //! cargo_build::rustc_link_arg_bin("client", [
 //!         "-mlongcalls",
@@ -32,18 +32,19 @@
 //! 
 //! #### With `cargo-build`:
 //! ```rust
-//! cargo_build::rustc_check_cfgs(["cuda"]);
+//! cargo_build::rustc_check_cfgs("cuda");
 //! cargo_build::rustc_cfg("cuda");
 //! 
 //! cargo_build::rustc_check_cfg("api_version", ["1", "2", "3"]);
 //! cargo_build::rustc_cfg(("api_version", "1"));
 //! ```
 //! #### Without `cargo-build`:
+//! - Note the inconsistancy of `cfg`
+//! - Note the need for escape sequences
 //! ```rust
-//! // Note the inconstancy of `cfg`.
 //! println!("cargo::rustc-check-cfg=cfg(cuda)");
 //! println!("cargo::rustc-cfg=cuda");
-//! // Note the need for escape sequences
+//! 
 //! println!("cargo::rustc-check-cfg=cfg(api_version, values(\"1\", \"2\", \"3\"))");
 //! println!("cargo::rustc-cfg=api_version-\"1\"");
 //! ```
@@ -70,7 +71,7 @@
 //!     println!("cargo::warning=Warning during compilation: {} is not set", env_var);
 //!     println!("cargo::error=Unable to finish compilation: {} is not set", env_var);
 //! 
-//!     // or with custom function
+//!     // or with custom function. Note the need of `format!` on call site.
 //!     fn my_error(err: &str) { println!("cargo::error={}", err); }
 //!     my_error(&format!("Warning during compilation: {} is not set", env_var));
 //! }
@@ -83,6 +84,7 @@
 //! against library `bar`, you may want to make sure that library `bar`'s `rustc-link-lib`
 //! instruction appears after instructions to link object `foo`.
 
+#[cfg(feature="macro")]
 mod macros;
 // pub use macros::*; is not needed because #[macro_export] exports them from crate root
 
@@ -95,4 +97,5 @@ pub mod build_out;
 mod functions_test;
 
 #[cfg(test)]
+#[cfg(feature="macro")]
 mod macros_test;
