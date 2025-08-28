@@ -5,13 +5,17 @@
 //! <https://doc.rust-lang.org/cargo/reference/build-scripts.html>
 //!
 //! Those instructions are usually implemented by `println!("cargo::")` call. This crate
-//! provides easy-to-use wrapper-functions around those instructions.
+//! provides easy to use wrapper-functions around those instructions.
 //! 
-//! #### Main benefit that it is harder to make typos with cargo commands and there is no need to repeat `println!("cargo::")` for each command.
+//! Benefits:
+//! - Less code.
+//! - Easier to modify.
+//! - Harder to make typos.
 //!
 //! #### With `cargo-build`:
 //! ```rust
-//! cargo_build::rustc_link_arg_bin("server", ["-Wl", "--cref"]);
+//! cargo_build::rustc_link_arg_bin("server", ["-Wl,--cref"]);
+//! 
 //! cargo_build::rustc_link_arg_bin("client", [
 //!         "-mlongcalls",
 //!         "-ffunction-sections",
@@ -20,8 +24,7 @@
 //! ```
 //! #### Without `cargo-build`:
 //! ```rust
-//! println!("cargo::rustc-link-arg-bin=server=-Wl");
-//! println!("cargo::rustc-link-arg-bin=server=--cref");
+//! println!("cargo::rustc-link-arg-bin=server=-Wl,--cref");
 //! println!("cargo::rustc-link-arg-bin=client=-mlongcalls");
 //! println!("cargo::rustc-link-arg-bin=client=-ffunction-sections");
 //! println!("cargo::rustc-link-arg-bin=client=-Wl,--cref");
@@ -29,13 +32,11 @@
 //! 
 //! #### With `cargo-build`:
 //! ```rust
-//! cargo_build::rustc_check_cfg("cuda", []);
+//! cargo_build::rustc_check_cfgs(["cuda"]);
 //! cargo_build::rustc_cfg("cuda");
 //! 
-//! use cargo_build::StrExtCfg;
-//! 
 //! cargo_build::rustc_check_cfg("api_version", ["1", "2", "3"]);
-//! cargo_build::rustc_cfg("api_version".value("1"));
+//! cargo_build::rustc_cfg(("api_version", "1"));
 //! ```
 //! #### Without `cargo-build`:
 //! ```rust
@@ -46,6 +47,34 @@
 //! println!("cargo::rustc-check-cfg=cfg(api_version, values(\"1\", \"2\", \"3\"))");
 //! println!("cargo::rustc-cfg=api_version-\"1\"");
 //! ```
+//! #### With `cargo-build`:
+//! ```rust
+//! cargo_build::warning("Warning during compilation");
+//! cargo_build::error("Fatal error during compilation");
+//! 
+//! let env_var = "HOST";
+//! 
+//! if std::env::var(env_var).is_ok() {
+//!     cargo_build::warning!("Warning during compilation: {} is not set", env_var);
+//!     cargo_build::error!("Unable to finish compilation: {} is not set", env_var);
+//! }
+//! ```
+//! #### Without `cargo-build`:
+//! ```rust
+//! println!("cargo::warning=Warning during compilation");
+//! println!("cargo::error=Fatal error during compilation");
+//! 
+//! let env_var = "HOST";
+//! 
+//! if std::env::var(env_var).is_ok() {
+//!     println!("cargo::warning=Warning during compilation: {} is not set", env_var);
+//!     println!("cargo::error=Unable to finish compilation: {} is not set", env_var);
+//! 
+//!     // or with custom function
+//!     fn my_error(err: &str) { println!("cargo::error={}", err); }
+//!     my_error(&format!("Warning during compilation: {} is not set", env_var));
+//! }
+//! ```
 //!
 //! Note: The order of instructions in the build script may affect the order of arguments that
 //! cargo passes to rustc. In turn, the order of arguments passed to rustc may affect the
@@ -53,10 +82,6 @@
 //! the order of the build script’s instructions. For example, if object `foo` needs to link
 //! against library `bar`, you may want to make sure that library `bar`'s `rustc-link-lib`
 //! instruction appears after instructions to link object `foo`.
-//!
-//! #### Why functions and not macros?
-//!
-//! - Faster compile times and easier code
 
 mod macros;
 // pub use macros::*; is not needed because #[macro_export] exports them from crate root

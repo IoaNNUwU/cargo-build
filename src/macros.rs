@@ -147,7 +147,7 @@ macro_rules! rustc_link_arg {
 /// to the compiler, but only when building `cdylib` crates. Its usage is highly platform specific.
 /// It is useful to set the shared library version or linker script.
 ///
-/// If you want to pass flags for all supported targets see [`rustc_link_arg`]
+/// If you want to pass flags for all supported targets see [`rustc_link_arg!`]
 ///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-cdylib-link-arg>
 #[macro_export]
@@ -162,4 +162,20 @@ macro_rules! rustc_link_arg_cdylib {
             )*
         });
     }};
+}
+
+
+#[macro_export]
+macro_rules! warning {
+    ($($arg:tt)*) => {
+
+        
+    };
+}
+
+#[macro_export]
+macro_rules! error {
+    ($($arg:tt)*) => {
+        
+    };
 }

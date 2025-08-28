@@ -4,35 +4,53 @@ use std::path::Path;
 
 const ERR_MSG: &str = "Unable to write to CARGO_BUILD_OUT";
 
-/// Tells Cargo to re-run the build script if file with given name changes.
+#[path ="var_arg.rs"]
+mod var_arg;
+
+/// Tells Cargo to re-run the build script **ONLY** if file or directory with given name changes.
 ///
+/// The default if no `rerun-if` instructions are emitted is to scan the entire package
+/// directory for changes.
+///
+/// #### Example: rerun build script **ONLY** if one of specified files or folders changes:
 /// ```rust
 /// cargo_build::rerun_if_changed(["LICENSE.md", "README.md"]);
 /// cargo_build::rerun_if_changed(["docs_folder"]);
-///
 /// cargo_build::rerun_if_changed(["src/main.c"]);
+///
+/// // Convert `String` to `&str` to use as argument
+/// let platform: String = std::env::var("OS").unwrap();
+/// let config_path: &str = &format!("{platform}-config.toml");
+///
+/// cargo_build::rerun_if_changed([config_path]);
+///
+/// // `String` doesnt need to be converted if used after `&str` arguments
+/// let platform: String = std::env::var("OS").unwrap();
+/// let config_path: String = format!("{platform}-config.toml");
+///
+/// cargo_build::rerun_if_env_changed(["LOG", "VERBOSE", &config_path]);
 /// ```
 ///
-/// The `rerun-if-changed` instruction tells Cargo to re-run the build script if the file at
-/// the given path has changed. Currently, Cargo only uses the filesystem last-modified “mtime”
-/// timestamp to determine if the file has changed. It compares against an internal cached
-/// timestamp of when the build script last ran.
+/// See also [`rerun_if_changed!` macro](`crate::rerun_if_changed!`) with compile-time checked formatting
+/// and variable number of arguments.
+///
+/// Currently, Cargo only uses the filesystem last-modified “mtime” timestamp to determine if the
+/// file has changed. It compares against an internal cached timestamp of when the build script last ran.
 ///
 /// If the path points to a directory, it will scan the entire directory for any modifications.
 ///
 /// If the build script inherently does not need to re-run under any circumstance, then using
-/// `cargo_build::rerun_if_changed(["build.rs"])` is a simple way to prevent it from being re-run
-/// (otherwise, the default if no `rerun-if` instructions are emitted is to scan the entire
-/// package directory for changes). Cargo automatically handles whether or not the script itself
-/// needs to be recompiled, and of course the script will be re-run after it has been recompiled.
-/// Otherwise, specifying build.rs is redundant and unnecessary.
+/// `cargo_build::rerun_if_changed(["build.rs"])` is a simple way to prevent it from being re-run.
+/// Cargo automatically handles whether or not the script itself needs to be recompiled, and of course
+/// the script will be re-run after it has been recompiled. Otherwise, specifying build.rs is redundant
+/// and unnecessary.
 ///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rerun-if-changed>
 pub fn rerun_if_changed(file_paths: impl IntoIterator<Item = impl AsRef<Path>>) {
     for file_path in file_paths {
         let file_path = file_path.as_ref().display();
-        CARGO_BUILD_OUT.with(|out| {
-            writeln!(out.borrow_mut(), "cargo::rerun-if-changed={file_path}").expect(ERR_MSG)
+        CARGO_BUILD_OUT.with_borrow_mut(|out| {
+            writeln!(out, "cargo::rerun-if-changed={file_path}").expect(ERR_MSG)
         });
     }
 }
@@ -41,12 +59,29 @@ pub fn rerun_if_changed(file_paths: impl IntoIterator<Item = impl AsRef<Path>>) 
 ///
 /// ```rust
 /// cargo_build::rerun_if_env_changed(["LOG", "VERBOSE"]);
+///
+/// // Convert `String` to `&str` to use as argument
+/// let platform: String = std::env::var("OS").unwrap();
+/// let config_path_env: &str = &format!("{platform}_CONFIG_PATH");
+/// //                   ^^^^   ^^^ &String
+/// cargo_build::rerun_if_env_changed([config_path_env]);
+///
+/// // `String` doesnt need to be converted if used after `&str` arguments
+/// let platform: String = std::env::var("OS").unwrap();
+/// let config_path_env: String = format!("{platform}_CONFIG_PATH");
+///
+/// cargo_build::rerun_if_env_changed(["LOG", "VERBOSE", &config_path_env]);
 /// ```
 ///
+/// See also [`rerun_if_env_changed!` macro](`crate::rerun_if_env_changed!`) with compile-time
+/// checked formatting and variable number of arguments.
+///
 /// Note that the environment variables here are intended for global environment variables like
-/// CC and such, it is not possible to use this for environment variables like TARGET that Cargo
+/// `CC` and such, it is not possible to use this for environment variables like `TARGET` that Cargo
 /// sets for build scripts. The environment variables in use are those received by cargo
 /// invocations, not those received by the executable of the build script.
+///
+/// See [full list of `cargo` environment variables](https://doc.rust-lang.org/cargo/reference/environment-variables.html).
 ///
 /// As of 1.46, using `env!` and `option_env!` in source code will automatically detect changes
 /// and trigger rebuilds. `rerun-if-env-changed` is no longer needed for variables already
@@ -55,27 +90,35 @@ pub fn rerun_if_changed(file_paths: impl IntoIterator<Item = impl AsRef<Path>>) 
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rerun-if-env-changed>
 pub fn rerun_if_env_changed<'a>(env_vars: impl IntoIterator<Item = &'a str>) {
     for env_var in env_vars {
-        CARGO_BUILD_OUT.with(|out| {
-            writeln!(out.borrow_mut(), "cargo::rerun-if-env-changed={env_var}").expect(ERR_MSG)
+        CARGO_BUILD_OUT.with_borrow_mut(|out| {
+            writeln!(out, "cargo::rerun-if-env-changed={env_var}").expect(ERR_MSG)
         });
     }
 }
 
 /// Passes custom flags to a linker for benchmarks, binaries, `cdylib` crates, examples, and tests.
 ///
+/// - To set linker flags for specific targets see [`rustc_link_arg_benches`], [`rustc_link_arg_bins`],
+/// [`rustc_link_arg_cdylib`], [`rustc_link_arg_examples`], [`rustc_link_arg_tests`].
+///
 /// ```rust
 /// cargo_build::rustc_link_arg(["-mlongcalls", "-ffunction-sections"]);
 /// cargo_build::rustc_link_arg(["-Wl,--cref"]);
+///
+/// let stack_size = 8 * 1024 * 1024;
 ///
 /// if cfg!(target_os = "windows") {
 ///     cargo_build::rustc_link_arg([
 ///         "/WX",
 ///         "/MANIFEST:EMBED",
-///         &format!("/stack:{}", 8 * 1024 * 1024)
+///         &format!("/stack:{}", stack_size)
 ///     ]);
 /// }
 /// ```
-/// 
+///
+/// See also [`rustc_link_arg!` macro](`crate::rustc_link_arg!`) with compile-time checked
+/// formatting and variable number of arguments.
+///
 /// The `rustc-link-arg` instruction tells Cargo to pass the
 /// [`-C link-arg=FLAG` option](https://doc.rust-lang.org/rustc/codegen-options/index.html#link-arg)
 /// to the compiler, but only when building supported targets (benchmarks,
@@ -85,13 +128,16 @@ pub fn rerun_if_env_changed<'a>(env_vars: impl IntoIterator<Item = &'a str>) {
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-arg>
 pub fn rustc_link_arg<'a>(flags: impl IntoIterator<Item = &'a str>) {
     for flag in flags {
-        CARGO_BUILD_OUT
-            .with(|out| writeln!(out.borrow_mut(), "cargo::rustc-link-arg={flag}").expect(ERR_MSG));
+        CARGO_BUILD_OUT.with_borrow_mut(|out| {
+            writeln!(out, "cargo::rustc-link-arg={flag}").expect(ERR_MSG);
+        });
     }
 }
 
 /// Passes custom flags to a linker for `cdylib` crates.
-/// 
+///
+/// - To set linker flags for all supported targets see [`rustc_link_arg`].
+///
 /// ```rust
 /// cargo_build::rustc_link_arg_cdylib([
 ///         "-mlongcalls",
@@ -110,13 +156,16 @@ pub fn rustc_link_arg<'a>(flags: impl IntoIterator<Item = &'a str>) {
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-cdylib-link-arg>
 pub fn rustc_link_arg_cdylib<'a>(flags: impl IntoIterator<Item = &'a str>) {
     for flag in flags {
-        CARGO_BUILD_OUT.with(|out| {
-            writeln!(out.borrow_mut(), "cargo::rustc-link-arg-cdylib={flag}").expect(ERR_MSG)
+        CARGO_BUILD_OUT.with_borrow_mut(|out| {
+            writeln!(out, "cargo::rustc-link-arg-cdylib={flag}").expect(ERR_MSG)
         });
     }
 }
 
 /// Passes custom flags to a linker for specific binary name.
+///
+/// - To set linker flags for all bin targets see [`rustc_link_arg_bins`].
+/// - To set linker flags for all supported targets see [`rustc_link_arg`].
 ///
 /// ```rust
 /// cargo_build::rustc_link_arg_bin("server", ["-Wl,--cref"]);
@@ -133,19 +182,18 @@ pub fn rustc_link_arg_cdylib<'a>(flags: impl IntoIterator<Item = &'a str>) {
 /// to the compiler, but only when building specified binary target. Its usage is highly platform
 /// specific. It is useful to set the shared library version or linker script.
 ///
-/// If you want to pass flags for all binaries see [`rustc_link_arg_bins`]
-/// If you want to pass flags for all supported targets see [`rustc_link_arg`]
-///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-bin-link-arg>
 pub fn rustc_link_arg_bin<'b, 'f>(bin: &'b str, flags: impl IntoIterator<Item = &'f str>) {
     for flag in flags {
-        CARGO_BUILD_OUT.with(|out| {
-            writeln!(out.borrow_mut(), "cargo::rustc-link-arg-bin={bin}={flag}").expect(ERR_MSG)
+        CARGO_BUILD_OUT.with_borrow_mut(|out| {
+            writeln!(out, "cargo::rustc-link-arg-bin={bin}={flag}").expect(ERR_MSG)
         });
     }
 }
 
 /// Passes custom flags to a linker for binaries.
+///
+/// To set linker flags for all supported targets see [`rustc_link_arg`].
 ///
 /// ```rust
 /// cargo_build::rustc_link_arg_bins([
@@ -160,18 +208,18 @@ pub fn rustc_link_arg_bin<'b, 'f>(bin: &'b str, flags: impl IntoIterator<Item = 
 /// to the compiler, but only when building binary targets. Its usage is highly platform
 /// specific. It is useful to set the shared library version or linker script.
 ///
-/// If you want to pass flags for all supported targets see [`rustc_link_arg`]
-///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-arg-bins>
 pub fn rustc_link_arg_bins<'a>(flags: impl IntoIterator<Item = &'a str>) {
     for flag in flags {
-        CARGO_BUILD_OUT.with(|out| {
-            writeln!(out.borrow_mut(), "cargo::rustc-link-arg-bins={flag}").expect(ERR_MSG)
+        CARGO_BUILD_OUT.with_borrow_mut(|out| {
+            writeln!(out, "cargo::rustc-link-arg-bins={flag}").expect(ERR_MSG)
         });
     }
 }
 
 /// Passes custom flags to a linker for tests.
+///
+/// To set linker flags for all supported targets see [`rustc_link_arg`].
 ///
 /// ```rust
 /// cargo_build::rustc_link_arg_tests([
@@ -186,18 +234,18 @@ pub fn rustc_link_arg_bins<'a>(flags: impl IntoIterator<Item = &'a str>) {
 /// to the compiler, but only when building tests. Its usage is highly platform
 /// specific. It is useful to set the shared library version or linker script.
 ///
-/// If you want to pass flags for all supported targets see [`rustc_link_arg`]
-///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-arg-tests>
 pub fn rustc_link_arg_tests<'a>(flags: impl IntoIterator<Item = &'a str>) {
     for flag in flags {
-        CARGO_BUILD_OUT.with(|out| {
-            writeln!(out.borrow_mut(), "cargo::rustc-link-arg-tests={flag}").expect(ERR_MSG)
+        CARGO_BUILD_OUT.with_borrow_mut(|out| {
+            writeln!(out, "cargo::rustc-link-arg-tests={flag}").expect(ERR_MSG)
         });
     }
 }
 
 /// Passes custom flags to a linker for examples.
+///
+/// To set linker flags for all supported targets see [`rustc_link_arg`].
 ///
 /// ```rust
 /// cargo_build::rustc_link_arg_examples([
@@ -212,18 +260,18 @@ pub fn rustc_link_arg_tests<'a>(flags: impl IntoIterator<Item = &'a str>) {
 /// to the compiler, but only when building examples. Its usage is highly platform
 /// specific. It is useful to set the shared library version or linker script.
 ///
-/// If you want to pass flags for all supported targets see [`rustc_link_arg`]
-///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-arg-examples>
 pub fn rustc_link_arg_examples<'a>(flags: impl IntoIterator<Item = &'a str>) {
     for flag in flags {
-        CARGO_BUILD_OUT.with(|out| {
-            writeln!(out.borrow_mut(), "cargo::rustc-link-arg-examples={flag}").expect(ERR_MSG)
+        CARGO_BUILD_OUT.with_borrow_mut(|out| {
+            writeln!(out, "cargo::rustc-link-arg-examples={flag}").expect(ERR_MSG)
         });
     }
 }
 
 /// Passes custom flags to a linker for benches.
+///
+/// To set linker flags for all supported targets see [`rustc_link_arg`].
 ///
 /// ```rust
 /// cargo_build::rustc_link_arg_benches([
@@ -238,29 +286,16 @@ pub fn rustc_link_arg_examples<'a>(flags: impl IntoIterator<Item = &'a str>) {
 /// to the compiler, but only when building benches. Its usage is highly platform
 /// specific. It is useful to set the shared library version or linker script.
 ///
-/// If you want to pass flags for all supported targets see [`rustc_link_arg`]
-///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-arg-benches>
 pub fn rustc_link_arg_benches<'a>(flags: impl IntoIterator<Item = &'a str>) {
     for flag in flags {
-        CARGO_BUILD_OUT.with(|out| {
-            writeln!(out.borrow_mut(), "cargo::rustc-link-arg-benches={flag}").expect(ERR_MSG)
+        CARGO_BUILD_OUT.with_borrow_mut(|out| {
+            writeln!(out, "cargo::rustc-link-arg-benches={flag}").expect(ERR_MSG)
         });
     }
 }
 
-/// Adds a library to link
-///
-/// The `rustc-link-lib` instruction tells Cargo to link the given library using the compiler’s
-/// [`-l` flag](https://doc.rust-lang.org/rustc/command-line-arguments.html#option-l-link-lib).
-/// This is typically used to link a native library using [FFI](https://doc.rust-lang.org/nomicon/ffi.html).
-///
-/// Argument to this function is `LIB` string which which is directly passed to `rustc`.
-/// Currently the fully supported syntax for LIB is `[KIND[:MODIFIERS]=]NAME[:RENAME]`.
-///
-/// The optional `KIND` may be one of `dylib`, `static`, or `framework`. See the
-/// [rustc book](https://doc.rust-lang.org/rustc/command-line-arguments.html#option-l-link-lib)
-/// for more detail.
+/// Adds a library to link.
 ///
 /// ```rust
 /// cargo_build::rustc_link_lib(["nghttp2", "libssl", "libcrypto"]);
@@ -273,15 +308,29 @@ pub fn rustc_link_arg_benches<'a>(flags: impl IntoIterator<Item = &'a str>) {
 /// ]);
 /// ```
 ///
+/// The `rustc-link-lib` instruction tells Cargo to link the given library using the compiler’s
+/// [`-l` flag](https://doc.rust-lang.org/rustc/command-line-arguments.html#option-l-link-lib).
+/// This is typically used to link a native library using [FFI](https://doc.rust-lang.org/nomicon/ffi.html).
+///
+/// Argument to this function is `LIB` string which which is directly passed to `rustc`.
+/// Currently the fully supported syntax for LIB is `[KIND[:MODIFIERS]=]NAME[:RENAME]`.
+///
+/// The optional `KIND` may be one of `dylib`, `static`, or `framework`. See the
+/// [rustc book](https://doc.rust-lang.org/rustc/command-line-arguments.html#option-l-link-lib)
+/// for more detail.
+///
+/// See more specific [`rustc_link_lib_dylib`], [`rustc_link_lib_static`], [`rustc_link_lib_static`],
+/// [`rustc_link_lib_framework`].
+///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-lib>
 pub fn rustc_link_lib<'a>(libs: impl IntoIterator<Item = &'a str>) {
     for lib in libs {
         CARGO_BUILD_OUT
-            .with(|out| writeln!(out.borrow_mut(), "cargo::rustc-link-lib={lib}").expect(ERR_MSG));
+            .with_borrow_mut(|out| writeln!(out, "cargo::rustc-link-lib={lib}").expect(ERR_MSG));
     }
 }
 
-/// [`rustc_link_lib`] alternative that automatically passes `dylib=`
+/// [`rustc_link_lib`] alternative that automatically passes `dylib=`.
 ///
 /// ```rust
 /// cargo_build::rustc_link_lib_dylib(["nghttp2", "libssl", "libcrypto"]);
@@ -290,15 +339,17 @@ pub fn rustc_link_lib<'a>(libs: impl IntoIterator<Item = &'a str>) {
 ///     ":+whole-archive=mylib:renamed_lib",
 /// ]);
 /// ```
+///
+/// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-lib>
 pub fn rustc_link_lib_dylib<'a>(libs: impl IntoIterator<Item = &'a str>) {
     for lib in libs {
-        CARGO_BUILD_OUT.with(|out| {
-            writeln!(out.borrow_mut(), "cargo::rustc-link-lib=dylib={lib}").expect(ERR_MSG)
+        CARGO_BUILD_OUT.with_borrow_mut(|out| {
+            writeln!(out, "cargo::rustc-link-lib=dylib={lib}").expect(ERR_MSG)
         });
     }
 }
 
-/// [`rustc_link_lib`] alternative that automatically passes `static=`
+/// [`rustc_link_lib`] alternative that automatically passes `static=`.
 ///
 /// ```rust
 /// cargo_build::rustc_link_lib_static(["nghttp2", "libssl", "libcrypto"]);
@@ -307,15 +358,17 @@ pub fn rustc_link_lib_dylib<'a>(libs: impl IntoIterator<Item = &'a str>) {
 ///     ":+whole-archive=mylib:renamed_lib",
 /// ]);
 /// ```
+///
+/// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-lib>
 pub fn rustc_link_lib_static<'a>(libs: impl IntoIterator<Item = &'a str>) {
     for lib in libs {
-        CARGO_BUILD_OUT.with(|out| {
-            writeln!(out.borrow_mut(), "cargo::rustc-link-lib=static={lib}").expect(ERR_MSG)
+        CARGO_BUILD_OUT.with_borrow_mut(|out| {
+            writeln!(out, "cargo::rustc-link-lib=static={lib}").expect(ERR_MSG)
         });
     }
 }
 
-/// [`rustc_link_lib`] alternative that automatically passes `framework=`
+/// [`rustc_link_lib`] alternative that automatically passes `framework=`.
 ///
 /// ```rust
 /// cargo_build::rustc_link_lib_framework(["nghttp2", "libssl", "libcrypto"]);
@@ -324,15 +377,26 @@ pub fn rustc_link_lib_static<'a>(libs: impl IntoIterator<Item = &'a str>) {
 ///     ":+whole-archive=mylib:renamed_lib",
 /// ]);
 /// ```
+///
+/// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-lib>
 pub fn rustc_link_lib_framework<'a>(libs: impl IntoIterator<Item = &'a str>) {
     for lib in libs {
-        CARGO_BUILD_OUT.with(|out| {
-            writeln!(out.borrow_mut(), "cargo::rustc-link-lib=framework={lib}").expect(ERR_MSG)
+        CARGO_BUILD_OUT.with_borrow_mut(|out| {
+            writeln!(out, "cargo::rustc-link-lib=framework={lib}").expect(ERR_MSG)
         });
     }
 }
 
-/// Adds a directory to the library search path
+/// Adds a directory to the library search path.
+///
+/// ```rust
+/// cargo_build::rustc_link_search(["libs"]);
+///
+/// cargo_build::rustc_link_search([
+///     "native=libs",
+///     "framework=mac_os_libs"
+/// ]);
+/// ```
 ///
 /// The `rustc-link-lib` instruction tells Cargo to pass the
 /// [`-L` flag](https://doc.rust-lang.org/rustc/command-line-arguments.html#option-l-search-path)
@@ -344,111 +408,102 @@ pub fn rustc_link_lib_framework<'a>(libs: impl IntoIterator<Item = &'a str>) {
 /// See the [rustc book](https://doc.rust-lang.org/rustc/command-line-arguments.html#option-l-search-path)
 /// for more detail.
 ///
-/// ```rust
-/// cargo_build::rustc_link_search(["libs"]);
-///
-/// cargo_build::rustc_link_search([
-///     "native=libs",
-///     "framework=mac_os_libs"
-/// ]);
-/// ```
+/// See more specific [`rustc_link_search_dependency`], [`rustc_link_search_crate`], [`rustc_link_search_native`],
+/// [`rustc_link_search_framework`], [`rustc_link_search_all`].
 ///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-search>
 pub fn rustc_link_search(paths: impl IntoIterator<Item = impl AsRef<Path>>) {
     for path in paths {
-        CARGO_BUILD_OUT.with(|out| {
-            writeln!(
-                out.borrow_mut(),
-                "cargo::rustc-link-search={}",
-                path.as_ref().display()
-            )
-            .expect(ERR_MSG);
+        CARGO_BUILD_OUT.with_borrow_mut(|out| {
+            let path = path.as_ref().display();
+            writeln!(out, "cargo::rustc-link-search={}", path).expect(ERR_MSG);
         });
     }
 }
 
-/// [`rustc_link_search`] alternative that automatically passes `native=`
+/// [`rustc_link_search`] alternative that automatically passes `native=`.
 ///
 /// ```rust
 /// cargo_build::rustc_link_search_native(["libs", "vendor", "api"]);
 /// ```
+///
+/// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-search>
 pub fn rustc_link_search_native(paths: impl IntoIterator<Item = impl AsRef<Path>>) {
     for path in paths {
         let path = path.as_ref().display();
-        CARGO_BUILD_OUT.with(|out| {
-            writeln!(out.borrow_mut(), "cargo::rustc-link-search=native={path}").expect(ERR_MSG);
+        CARGO_BUILD_OUT.with_borrow_mut(|out| {
+            writeln!(out, "cargo::rustc-link-search=native={path}").expect(ERR_MSG);
         });
     }
 }
 
-/// [`rustc_link_search`] alternative that automatically passes `dependency=`
+/// [`rustc_link_search`] alternative that automatically passes `dependency=`.
 ///
 /// ```rust
 /// cargo_build::rustc_link_search_dependency(["libs", "vendor", "api"]);
 /// ```
+///
+/// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-search>
 pub fn rustc_link_search_dependency(paths: impl IntoIterator<Item = impl AsRef<Path>>) {
     for path in paths {
         let path = path.as_ref().display();
-        CARGO_BUILD_OUT.with(|out| {
-            writeln!(
-                out.borrow_mut(),
-                "cargo::rustc-link-search=dependency={path}"
-            )
-            .expect(ERR_MSG);
+        CARGO_BUILD_OUT.with_borrow_mut(|out| {
+            writeln!(out, "cargo::rustc-link-search=dependency={path}").expect(ERR_MSG);
         });
     }
 }
 
-/// [`rustc_link_search`] alternative that automatically passes `crate=`
+/// [`rustc_link_search`] alternative that automatically passes `crate=`.
 ///
 /// ```rust
 /// cargo_build::rustc_link_search_crate(["libs", "vendor", "api"]);
 /// ```
+///
+/// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-search>
 pub fn rustc_link_search_crate(paths: impl IntoIterator<Item = impl AsRef<Path>>) {
     for path in paths {
         let path = path.as_ref().display();
-        CARGO_BUILD_OUT.with(|out| {
-            writeln!(out.borrow_mut(), "cargo::rustc-link-search=crate={path}").expect(ERR_MSG);
+        CARGO_BUILD_OUT.with_borrow_mut(|out| {
+            writeln!(out, "cargo::rustc-link-search=crate={path}").expect(ERR_MSG);
         });
     }
 }
 
-/// [`rustc_link_search`] alternative that automatically passes `framework=`
+/// [`rustc_link_search`] alternative that automatically passes `framework=`.
 ///
 /// ```rust
 /// cargo_build::rustc_link_search_framework(["libs", "vendor", "api"]);
 /// ```
+///
+/// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-search>
 pub fn rustc_link_search_framework(paths: impl IntoIterator<Item = impl AsRef<Path>>) {
     for path in paths {
         let path = path.as_ref().display();
-        CARGO_BUILD_OUT.with(|out| {
-            writeln!(
-                out.borrow_mut(),
-                "cargo::rustc-link-search=framework={path}"
-            )
-            .expect(ERR_MSG);
+        CARGO_BUILD_OUT.with_borrow_mut(|out| {
+            writeln!(out, "cargo::rustc-link-search=framework={path}").expect(ERR_MSG);
         });
     }
 }
 
-/// [`rustc_link_search`] alternative that automatically passes `all=`
+/// [`rustc_link_search`] alternative that automatically passes `all=`.
 ///
 /// ```rust
 /// cargo_build::rustc_link_search_all(["libs", "vendor", "api"]);
 /// ```
+///
+/// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-search>
 pub fn rustc_link_search_all(paths: impl IntoIterator<Item = impl AsRef<Path>>) {
     for path in paths {
         let path = path.as_ref().display();
-        CARGO_BUILD_OUT.with(|out| {
-            writeln!(out.borrow_mut(), "cargo::rustc-link-search=all={path}").expect(ERR_MSG)
+        CARGO_BUILD_OUT.with_borrow_mut(|out| {
+            writeln!(out, "cargo::rustc-link-search=all={path}").expect(ERR_MSG)
         });
     }
 }
 
 /// Passes certain flags to the compiler.
 ///
-/// The `rustc-flags` instruction tells Cargo to pass the given space-separated flags to the compiler.
-/// This only allows the `-l` and `-L` flags.
+/// #### This only allows the `-l` and `-L` flags.
 ///
 /// This function is is equivalent to using [`rustc_link_lib`] and [`rustc_link_search`].
 ///
@@ -466,24 +521,39 @@ pub fn rustc_link_search_all(paths: impl IntoIterator<Item = impl AsRef<Path>>) 
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-flags>
 pub fn rustc_flags<'a>(flags: impl IntoIterator<Item = &'a str>) {
     for flag in flags {
-        CARGO_BUILD_OUT.with(|out| {
-            writeln!(out.borrow_mut(), "cargo::rustc-flags={flag}").expect(ERR_MSG);
+        CARGO_BUILD_OUT.with_borrow_mut(|out| {
+            writeln!(out, "cargo::rustc-flags={flag}").expect(ERR_MSG);
         });
     }
 }
 
 /// Enables custom compile-time `cfg` settings.
 ///
-/// #### Register `cfg` options with [`rustc_check_cfg`] to avoid `unexpected_cfgs` warnings.
-///
-/// Import [`StrExtCfg`] trait to be able to call [`StrExtCfg::value`] on [`str`]:
+/// #### Register all `cfg` options with [`rustc_check_cfg`] to avoid `unexpected_cfgs` warnings.
 ///
 /// ```rust
 /// // build.rs
-/// use cargo_build::StrExtCfg;
-///
+/// cargo_build::rustc_check_cfgs(["custom_cfg"]);
+/// 
+/// cargo_build::rustc_cfg("custom_cfg");
+/// 
+/// // main.rs
+/// #[cfg(custom_cfg)]
+/// mod optional_mod;
+/// 
+/// ```
+/// ```rust
+/// // build.rs
 /// cargo_build::rustc_check_cfg("api_version", ["1", "2", "3"]);
-/// cargo_build::rustc_cfg("api_version".value("1"));
+/// 
+/// // Use pair (&str, &str) as argument to set `cfg` variant
+/// cargo_build::rustc_cfg(("api_version", "1"));
+/// 
+/// // main.rs
+/// #[cfg(api_version="1")]
+/// fn get_users() -> Vec<String> { todo!() }
+/// #[cfg(api_version="2")]
+/// fn get_users() -> Vec<String> { todo!() }
 /// ```
 ///
 /// The `rustc-cfg` instruction tells Cargo to pass the given value to the
@@ -504,192 +574,119 @@ pub fn rustc_flags<'a>(flags: impl IntoIterator<Item = &'a str>) {
 ///
 /// For example, using `cargo_build::rustc_cfgs(["abc"])` will then allow code to use `#[cfg(abc)]` (note the lack
 /// of `feature=`). Or an arbitrary key/value pair may be used like
-/// `cargo_build::rustc_cfg("my_component".value("foo"))` which enables `#[cfg(my_component="foo")]` code blocks.
+/// `cargo_build::rustc_cfg(("my_component", "foo"))` which enables `#[cfg(my_component="foo")]` code blocks.
 /// The key should be a Rust identifier, the value should be a string.
 ///
-/// #### Example: Set `cfg` option when environment variable is present:
-/// ```rust
-/// // build.rs
-/// cargo_build::rustc_check_cfgs(["cuda"]);
-///
-/// if std::env::var("CUDA_PATH").is_ok() {
-///     cargo_build::rustc_cfg("cuda");
-/// }
-/// // main.rs
-/// #[cfg(cuda)]
-/// mod cuda;
-/// ```
-///
-/// #### Example: Set custom `cfg` options:
-/// ```rust
-/// // build.rs
-/// cargo_build::rustc_check_cfgs(["api_v1", "api_v2"]);
-/// cargo_build::rustc_cfg("api_v1");
-///
-/// // main.rs
-/// #[cfg(api_v1)]
-/// fn get_users() -> Vec<String> { todo!() }
-/// #[cfg(api_v2)]
-/// fn get_users() -> Vec<String> { todo!() }
-/// ```
-///
-/// #### Example: Set range of custom `cfg` options:
-/// ```rust
-/// // build.rs
-/// use cargo_build::StrExtCfg;
-///
-/// cargo_build::rustc_check_cfg("api_version", ["1", "2", "3"]);
-/// cargo_build::rustc_cfg("api_version".value("1"));
-/// ```
-///
-/// #### Example: Explicit `cfg` argument:
-/// ```
-/// cargo_build::rustc_check_cfg("api_version", ["1", "2", "3"]);
-///
-/// use cargo_build::cfg;
-///
-/// cargo_build::rustc_cfg(cfg("api_version", Some("1")));
-/// cargo_build::rustc_cfg(cfg("custom_cfg", None));
-/// ```
+/// See [`rustc_check_cfg`] for more information on custom `cfg`s definitions.
+/// 
 /// See also:
 /// - [Conditional compilation example](https://doc.rust-lang.org/cargo/reference/build-script-examples.html#conditional-compilation).
 /// - [Syntax of rustc `--cfg` flag](https://doc.rust-lang.org/rustc/command-line-arguments.html#--cfg-configure-the-compilation-environment).
 /// - [Checking conditional configurations](https://doc.rust-lang.org/rustc/check-cfg.html).
 ///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-cfg>
+#[allow(private_bounds)]
 pub fn rustc_cfg<'a>(cfg: impl Into<RustcCfg<'a>>) {
     let RustcCfg { name, value } = cfg.into();
-    CARGO_BUILD_OUT.with(|out| match value {
-        None => writeln!(out.borrow_mut(), "cargo::rustc-cfg={name}").expect(ERR_MSG),
-        Some(value) => {
-            writeln!(out.borrow_mut(), "cargo::rustc-cfg={name}=\"{value}\"").expect(ERR_MSG)
-        }
+    CARGO_BUILD_OUT.with_borrow_mut(|out| match value {
+        None => writeln!(out, "cargo::rustc-cfg={name}").expect(ERR_MSG),
+        Some(value) => writeln!(out, "cargo::rustc-cfg={name}=\"{value}\"").expect(ERR_MSG),
     });
 }
 
-/// Helper struct for [`rustc_cfg`] function.
+/// Helper struct for [`rustc_cfg`] argument.
 ///
-/// Import [`StrExtCfg`] trait to be able to call [`StrExtCfg::value`] on [`str`]:
-///
-/// ```rust
-/// // build.rs
-/// use cargo_build::StrExtCfg;
-///
-/// cargo_build::rustc_check_cfg("api_version", ["1", "2", "3"]);
-///
-/// cargo_build::rustc_cfg("api_version".value("1"));
-///
-/// // Be more explicit
-/// use cargo_build::RustcCfg;
-///
-/// let cfg: RustcCfg = "api_version".value("1");
-/// let cfg = RustcCfg::new("api_version", Some("1"));
-/// ```
-pub struct RustcCfg<'a> {
-    name: &'a str,
-    value: Option<&'a str>,
-}
-
-impl<'a> RustcCfg<'a> {
-    pub fn new(name: &'a str, value: Option<&'a str>) -> Self {
-        Self { name, value }
-    }
-}
-
-impl<'a> From<&'a str> for RustcCfg<'a> {
-    fn from(value: &'a str) -> Self {
-        Self {
-            name: value,
-            value: None,
-        }
-    }
-}
-
-/// Helper function that allows explicit [`RustcCfg`] creation.
-pub fn cfg<'a>(name: &'a str, value: Option<&'a str>) -> RustcCfg<'a> {
-    RustcCfg { name, value }
-}
-
-/// Helper trait for [`rustc_cfg`] function.
-///
-/// Import this trait to be able to call [`StrExtCfg::value`] on [`str`]:
+/// - Implements `From<&str>` for zero-variant `cfg`s
+/// - Implements `From<(&str, &str)>` for `cfg`s with variants
 ///
 /// ```rust
 /// // build.rs
-/// use cargo_build::StrExtCfg;
-///
-/// cargo_build::rustc_check_cfg("api_version", ["1", "2", "3"]);
-///
-/// cargo_build::rustc_cfg("api_version".value("1"));
-/// ```
-pub trait StrExtCfg<'a> {
-    fn value(&'a self, value: &'a str) -> RustcCfg<'a>;
-}
-
-impl<'a> StrExtCfg<'a> for &'a str {
-    fn value(&'a self, value: &'a str) -> RustcCfg<'a> {
-        let mut cfg: RustcCfg = (*self).into();
-        cfg.value = Some(value);
-        cfg
-    }
-}
-
-/// Define expected `cfg` names and values. Those names are used when checking the *reachable* `cfg` expressions
-/// with the `unexpected_cfgs` lint.
-///
-/// Note that this function only *defines* expected config names. See [`rustc_cfg`] to set
-/// `cfg` option during `build.rs` run.
-///
-/// - see [`rustc_check_cfgs`] to register multiple `cfg` names without values.
-///
-/// Note that all possible cfgs should be defined, regardless of which cfgs are currently enabled. This includes
-/// all possible values of a given `cfg` name.
-///
-/// It is recommended to group the [`rustc_check_cfg`] and [`rustc_cfg`] functions as closely
-/// as possible in order to avoid typos, missing check-cfg, stale cfgs..
-///
-/// #### Example: Register `cfg` option without values, then enable it using `rustc_cfg`.
-/// ```rust
-/// // build.rs
-/// cargo_build::rustc_check_cfg("cuda", []); // [] indicates no values
-/// cargo_build::rustc_check_cfgs(["cuda"]);
-///
-/// cargo_build::rustc_cfg("cuda");
-///
+/// cargo_build::rustc_check_cfgs(["custom_cfg"]);
+/// cargo_build::rustc_cfg("custom_cfg");
+/// 
 /// // main.rs
-/// #[cfg(cuda)]
-/// mod cuda;
-/// ```
-///
-/// #### Example: Register multiple related `cfg` options without values:
-/// ```rust
-/// // build.rs
-/// cargo_build::rustc_check_cfgs(["api_v1", "api_v2"]);
-///
-/// cargo_build::rustc_cfg("api_v1");
-///
-/// // main.rs
-/// #[cfg(api_v1)]
-/// fn get_users() -> Vec<String> { todo!() }
-/// #[cfg(api_v2)]
-/// fn get_users() -> Vec<String> { todo!() }
-/// ```
-///
-/// #### Example: Register range of custom `cfg` options:
-///
-/// ```rust
+/// #[cfg(custom_cfg)]
+/// mod optional_mod;
+/// 
 /// // build.rs
 /// cargo_build::rustc_check_cfg("api_version", ["1", "2", "3"]);
-///
-/// use cargo_build::StrExtCfg;
-/// cargo_build::rustc_cfg("api_version".value("1"));
-///
+/// 
+/// // Use pair (&str, &str) as argument to set `cfg` variant
+/// cargo_build::rustc_cfg(("api_version", "1"));
+/// 
 /// // main.rs
 /// #[cfg(api_version="1")]
 /// fn get_users() -> Vec<String> { todo!() }
 /// #[cfg(api_version="2")]
 /// fn get_users() -> Vec<String> { todo!() }
 /// ```
+struct RustcCfg<'a> {
+    name: &'a str,
+    value: Option<&'a str>,
+}
+
+impl<'a> From<&'a str> for RustcCfg<'a> {
+    fn from(name: &'a str) -> Self {
+        Self { name, value: None }
+    }
+}
+
+impl<'a> From<(&'a str, &'a str)> for RustcCfg<'a> {
+    fn from((name, value): (&'a str, &'a str)) -> Self {
+        Self {
+            name,
+            value: Some(value),
+        }
+    }
+}
+
+impl<'a> From<(&'a str,)> for RustcCfg<'a> {
+    fn from(name: (&'a str,)) -> Self {
+        Self {
+            name: name.0,
+            value: None,
+        }
+    }
+}
+
+/// Define expected `cfg` names and values. Those names are used when checking the *reachable* `cfg` expressions
+/// with the `unexpected_cfgs` lint.
+///
+/// #### Note that this function only *defines* expected config names. See [`rustc_cfg`] to set `cfg` option during `build.rs` run.
+///
+/// - see [`rustc_check_cfgs`] to register multiple `cfg` optionss without values.
+/// 
+/// ```rust
+/// // build.rs
+/// cargo_build::rustc_check_cfgs(["custom_cfg"]); // or:
+/// cargo_build::rustc_check_cfg("custom_cfg", []); // [] indicates 0 variants
+/// 
+/// cargo_build::rustc_cfg("custom_cfg");
+/// 
+/// // main.rs
+/// #[cfg(custom_cfg)]
+/// mod optional_mod;
+/// ```
+/// ```
+/// // build.rs
+/// cargo_build::rustc_check_cfg("api_version", ["1", "2", "3"]);
+/// 
+/// // Use pair (&str, &str) as argument to set `cfg` variant
+/// cargo_build::rustc_cfg(("api_version", "1"));
+/// 
+/// // main.rs
+/// #[cfg(api_version="1")]
+/// fn get_users() -> Vec<String> { todo!() }
+/// #[cfg(api_version="2")]
+/// fn get_users() -> Vec<String> { todo!() }
+/// ```
+///
+/// Note that all possible cfgs should be defined, regardless of which cfgs are currently enabled. This includes
+/// all possible values of a given `cfg` name.
+///
+/// It is recommended to group the [`rustc_check_cfg`] and [`rustc_cfg`] functions as closely
+/// as possible in order to avoid typos, missing check-cfg, stale cfgs..
+/// 
 /// See also:
 /// - [Conditional compilation example](https://doc.rust-lang.org/cargo/reference/build-script-examples.html#conditional-compilation).
 /// - [Syntax of rustc `--check-cfg` flag](https://doc.rust-lang.org/rustc/command-line-arguments.html#option-check-cfg).
@@ -697,39 +694,48 @@ impl<'a> StrExtCfg<'a> for &'a str {
 ///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-check-cfg>
 pub fn rustc_check_cfg<'a>(name: &'a str, values: impl IntoIterator<Item = &'a str>) {
-
     let values: String = values
         .into_iter()
         .map(|e| format!("\"{e}\""))
         .collect::<Vec<String>>()
         .join(", ");
 
-    CARGO_BUILD_OUT.with(|out| {
+    CARGO_BUILD_OUT.with_borrow_mut(|out| {
         if values.is_empty() {
-            writeln!(out.borrow_mut(), "cargo::rustc-check-cfg=cfg({name})").expect(ERR_MSG);
+            writeln!(out, "cargo::rustc-check-cfg=cfg({name})").expect(ERR_MSG);
         } else {
-            writeln!(
-                out.borrow_mut(),
-                "cargo::rustc-check-cfg=cfg({name}, values({values}))"
-            )
-            .expect(ERR_MSG);
+            writeln!(out, "cargo::rustc-check-cfg=cfg({name}, values({values}))").expect(ERR_MSG);
         }
     });
 }
 
-/// Register expected config names and values. Those names are used when checking the *reachable* cfg expressions
+/// Define expected config names. Those names are used when checking the *reachable* cfg expressions
 /// with the `unexpected_cfgs` lint.
 ///
 /// This function is [`rustc_check_cfg`] alternative with multiple arguments.
 pub fn rustc_check_cfgs<'a>(names: impl IntoIterator<Item = &'a str>) {
     for name in names {
-        CARGO_BUILD_OUT.with(|out| {
-            writeln!(out.borrow_mut(), "cargo::rustc-check-cfg=cfg({name})").expect(ERR_MSG);
+        CARGO_BUILD_OUT.with_borrow_mut(|out| {
+            writeln!(out, "cargo::rustc-check-cfg=cfg({name})").expect(ERR_MSG);
         });
     }
 }
 
-/// Sets an environment variable
+/// Sets an environment variable.
+/// 
+/// #### Example: Automatically insert env variable during compile time.
+/// ```ignore
+/// // build.rs
+/// use std::process::Command;
+///
+/// let com_out = Command::new("git").args(["rev-parse", "HEAD"]).output().unwrap();
+/// let git_hash = String::from_utf8(com_out.stdout).unwrap();
+///
+/// cargo_build::rustc_env("GIT_HASH", &git_hash);
+///
+/// // main.rs
+/// const EMBEDDED_GIT_HASH: &str = env!("GIT_HASH");
+/// ```
 ///
 /// The `rustc-env` instruction tells Cargo to set the given environment variable when
 /// compiling the package. The value can be then retrieved by the
@@ -744,27 +750,22 @@ pub fn rustc_check_cfgs<'a>(names: impl IntoIterator<Item = &'a str>) {
 /// execution environment. Normally, these environment variables should only be checked at
 /// compile-time with the `env!` macro.
 ///
-/// #### Example: Automatically insert env variable during compile time.
-/// ```ignore
-/// // build.rs
-/// use std::process::Command;
-///
-/// let com_out = Command::new("git").args(["rev-parse", "HEAD"]).output().unwrap();
-/// let git_hash = String::from_utf8(com_out.stdout).unwrap();
-///
-/// cargo_build::rustc_env("GIT_HASH", &git_hash);
-///
-/// // main.rs
-/// const EMBEDDED_GIT_HASH: &str = env!("GIT_HASH");
-/// ```
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-env>
 pub fn rustc_env(var: &str, value: &str) {
-    CARGO_BUILD_OUT.with(|out| {
-        writeln!(out.borrow_mut(), "cargo::rustc-env={var}={value}").expect(ERR_MSG);
+    CARGO_BUILD_OUT.with_borrow_mut(|out| {
+        writeln!(out, "cargo::rustc-env={var}={value}").expect(ERR_MSG);
     });
 }
 
 /// Displays an error on the terminal.
+/// 
+/// #### This error fails the build even if all the other steps finished successfully.
+/// 
+/// ```rust
+/// cargo_build::error("Fatal error during build");
+/// ```
+/// 
+/// See [`error!` macro](`crate::error!`) with compile-time checked formatting.
 ///
 /// The error instruction tells Cargo to display an error after the build script has finished running, and then fail the build.
 ///
@@ -774,12 +775,18 @@ pub fn rustc_env(var: &str, value: &str) {
 ///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#cargo-error>
 pub fn error(msg: &str) {
-    CARGO_BUILD_OUT.with(|out| {
-        writeln!(out.borrow_mut(), "cargo::error={msg}").expect(ERR_MSG);
+    CARGO_BUILD_OUT.with_borrow_mut(|out| {
+        writeln!(out, "cargo::error={msg}").expect(ERR_MSG);
     });
 }
 
 /// Displays a warning on the terminal.
+///  
+/// ```rust
+/// cargo_build::error("Warning during build");
+/// ```
+/// 
+/// See [`warning!` macro](`crate::warning!`) with compile-time checked formatting.
 ///
 /// The `warning` instruction tells Cargo to display a warning after the build script has finished running. Warnings are
 /// only shown for `path` dependencies (that is, those you’re working on locally), so for example warnings printed out in
@@ -788,8 +795,8 @@ pub fn error(msg: &str) {
 ///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#cargo-warning>
 pub fn warning(msg: &str) {
-    CARGO_BUILD_OUT.with(|out| {
-        writeln!(out.borrow_mut(), "cargo::warning={msg}").expect(ERR_MSG);
+    CARGO_BUILD_OUT.with_borrow_mut(|out| {
+        writeln!(out, "cargo::warning={msg}").expect(ERR_MSG);
     });
 }
 
@@ -800,9 +807,16 @@ pub fn warning(msg: &str) {
 /// package has, as well as providing a principled system of passing metadata between package build scripts.
 ///
 /// ```toml
+/// // Cargo.toml
 /// [package]
-/// # ...
+/// ..
 /// links = "foo"
+/// ```
+/// ```rust
+/// // build.rs
+/// cargo_build::metadata("LINKAGE", "static");
+/// cargo_build::rustc_link_search_native(["libs"]);
+/// cargo_build::rustc_link_lib_static(["foo"]);
 /// ```
 ///
 /// This manifest states that the package links to the `libfoo` native library. When using the `links` key, the package must
@@ -823,21 +837,9 @@ pub fn warning(msg: &str) {
 ///
 /// Note that metadata is only passed to immediate dependents, not transitive dependents.
 ///
-/// ```ignore
-/// // Cargo.toml
-/// [package]
-/// ..
-/// links = "tiledb"
-///
-/// // build.rs
-/// cargo_build::metadata("LINKAGE", "static");
-/// cargo_build::rustc_link_search_native("libs");
-/// cargo_build::rustc_link_lib_static("tiledb_static");
-/// ```
-///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#the-links-manifest-key>
 pub fn metadata(key: &str, value: &str) {
-    CARGO_BUILD_OUT.with(|out| {
-        writeln!(out.borrow_mut(), "cargo::metadata={key}={value}").expect(ERR_MSG);
+    CARGO_BUILD_OUT.with_borrow_mut(|out| {
+        writeln!(out, "cargo::metadata={key}={value}").expect(ERR_MSG);
     });
 }

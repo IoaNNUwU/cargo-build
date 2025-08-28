@@ -313,25 +313,7 @@ fn rustc_cfg_test_value() {
 
     cargo_build::build_out::set(vec_out.clone());
 
-    use cargo_build::StrExtCfg;
-
-    cargo_build::rustc_cfg("api_version".value("1"));
-
-    let out = vec_out.0.read().expect("Unable to aquire Read lock");
-    let out: &str = str::from_utf8(&out).unwrap();
-
-    assert_eq!(out, "cargo::rustc-cfg=api_version=\"1\"\n");
-}
-
-#[test]
-fn rustc_cfg_test_value_cfg() {
-    let vec_out = TestWriteVecHandle::new();
-
-    cargo_build::build_out::set(vec_out.clone());
-
-    use cargo_build::cfg;
-    
-    cargo_build::rustc_cfg(cfg("api_version", Some("1")));
+    cargo_build::rustc_cfg(("api_version", "1"));
 
     let out = vec_out.0.read().expect("Unable to aquire Read lock");
     let out: &str = str::from_utf8(&out).unwrap();
