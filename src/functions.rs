@@ -16,7 +16,7 @@ const ERR_MSG: &str = "Unable to write to CARGO_BUILD_OUT";
 /// cargo_build::rerun_if_changed("src/main.c");
 ///
 /// // `String` can be used as argument
-/// let platform: String = std::env::var("OS").unwrap_or("linux");
+/// let platform: String = std::env::var("OS").unwrap_or("linux".to_string());
 /// let config_path: String = format!("{platform}-config.toml");
 ///
 /// cargo_build::rerun_if_changed(config_path);
@@ -58,7 +58,7 @@ where
 /// cargo_build::rerun_if_env_changed("LOG");
 ///
 /// // `String` can be used as argument
-/// let platform: String = std::env::var("OS").unwrap_or("linux");
+/// let platform: String = std::env::var("OS").unwrap_or("linux".to_string());
 /// let config_path_env: String = format!("{platform}_CONFIG_PATH");
 ///
 /// cargo_build::rerun_if_env_changed(config_path_env);

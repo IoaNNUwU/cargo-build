@@ -16,7 +16,7 @@
 ///     "lib-{}", "rust"
 /// );
 /// // Format runtime variables
-/// let host = std::env::var("CARGO_HOME").unwrap_or("");
+/// let host = std::env::var("OS").unwrap_or("linux".to_string());
 /// cargo_build::rerun_if_changed!("{host}");
 /// ```
 /// 
