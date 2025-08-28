@@ -327,7 +327,7 @@ fn rustc_check_cfg_test_no_values() {
 
     cargo_build::build_out::set(vec_out.clone());
 
-    cargo_build::rustc_check_cfg("api_version", []);
+    cargo_build::rustc_check_cfg("api_version", std::iter::empty::<&str>());
 
     let out = vec_out.0.read().expect("Unable to aquire Read lock");
     let out: &str = str::from_utf8(&out).unwrap();

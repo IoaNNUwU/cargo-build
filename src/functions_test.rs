@@ -1,6 +1,5 @@
 use std::{
-    io::Write,
-    sync::{Arc, RwLock},
+    io::Write, path::{Path, PathBuf}, sync::{Arc, RwLock}
 };
 
 use crate as cargo_build;
@@ -61,6 +60,41 @@ fn rerun_if_changed_test() {
 }
 
 #[test]
+fn rerun_if_changed_syntax_test() {
+    cargo_build::rerun_if_changed("hello");
+    cargo_build::rerun_if_changed(["hello"]);
+    cargo_build::rerun_if_changed(["hello", "world"]);
+
+    let text = "Hello World";
+    cargo_build::rerun_if_changed(text);
+    cargo_build::rerun_if_changed([text]);
+    cargo_build::rerun_if_changed(["hello", text]);
+    cargo_build::rerun_if_changed(["hello", text, "world"]);
+    cargo_build::rerun_if_changed([text, "world"]);
+
+    let text = String::from("Hello World");
+    cargo_build::rerun_if_changed(text);
+
+    let text = String::from("Hello World");
+    cargo_build::rerun_if_changed([text]);
+    
+    let text = String::from("Hello World");
+    cargo_build::rerun_if_changed(["hello", &text]);
+    cargo_build::rerun_if_changed(["hello", &text, "world"]);
+    cargo_build::rerun_if_changed([&text, "world"]);
+    
+    let text = PathBuf::from("helloworld.txt");
+    cargo_build::rerun_if_changed(text);
+
+    let text = PathBuf::from("helloworld.txt");
+    cargo_build::rerun_if_changed([text]);
+    
+    let text = PathBuf::from("helloworld.txt");
+    cargo_build::rerun_if_changed([&text, &PathBuf::from("hello.txt")]);
+    cargo_build::rerun_if_changed(["hello.txt", text.to_str().unwrap()]);
+}
+
+#[test]
 fn rerun_if_env_changed_test() {
     let vec_out = TestWriteVecHandle::new();
 
@@ -77,6 +111,27 @@ fn rerun_if_env_changed_test() {
                 cargo::rerun-if-env-changed=VAR1\n\
                 cargo::rerun-if-env-changed=VAR2\n"
     );
+}
+
+#[test]
+fn rerun_if_env_changed_syntax_test() {
+    cargo_build::rerun_if_env_changed("hello");
+    cargo_build::rerun_if_env_changed(["hello"]);
+    cargo_build::rerun_if_env_changed(["hello", "world"]);
+
+    let text = "Hello Worlenv_d";
+    cargo_build::rerun_if_env_changed(text);
+    cargo_build::rerun_if_env_changed(["hello", text]);
+    cargo_build::rerun_if_env_changed(["hello", text, "world"]);
+    cargo_build::rerun_if_env_changed([text, "world"]);
+
+    let text = String::from("Hello World");
+    cargo_build::rerun_if_env_changed(text);
+    
+    let text = String::from("Hello World");
+    cargo_build::rerun_if_env_changed(["hello", &text]);
+    cargo_build::rerun_if_env_changed(["hello", &text, "world"]);
+    cargo_build::rerun_if_env_changed([&text, "world"]);
 }
 
 #[test]
@@ -340,7 +395,7 @@ fn rustc_check_cfg_test_no_values() {
 
     cargo_build::build_out::set(vec_out.clone());
 
-    cargo_build::rustc_check_cfg("api_version", []);
+    cargo_build::rustc_check_cfg("api_version", std::iter::empty::<&str>());
 
     let out = vec_out.0.read().expect("Unable to aquire Read lock");
     let out: &str = str::from_utf8(&out).unwrap();
