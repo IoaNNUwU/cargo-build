@@ -356,9 +356,13 @@ where
 /// The optional `KIND` may be one of `dylib`, `static`, or `framework`. See the
 /// [rustc book](https://doc.rust-lang.org/rustc/command-line-arguments.html#option-l-link-lib)
 /// for more detail.
+/// 
+/// Linking modifiers (`[:MODIFIERS]`) are:
+/// - `-whole-archive`(default), `+whole-archive`.
+/// - `+bundle`(default), `-bundle`.
+/// - `-verbatim`(default), `+verbatim`.
 ///
-/// See more specific [`rustc_link_lib_dylib`], [`rustc_link_lib_static`], [`rustc_link_lib_static`],
-/// [`rustc_link_lib_framework`].
+/// See more specific [`rustc_link_lib_dylib`], [`rustc_link_lib_static`], [`rustc_link_lib_framework`].
 ///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-lib>
 #[allow(private_bounds)]

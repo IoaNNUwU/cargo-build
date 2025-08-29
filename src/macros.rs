@@ -42,11 +42,12 @@
 macro_rules! rerun_if_changed {
     () => {};
     ( $($($fmt_arg:tt),*);* ) => {{
-        $crate::build_out::CARGO_BUILD_OUT.with(|out| {
-            let mut out = out.borrow_mut();
+        $crate::build_out::CARGO_BUILD_OUT.with_borrow_mut(|out| {
             $(
                 write!(out, "cargo::rerun-if-changed=").expect("Unable to write to CARGO_BUILD_OUT");
-                writeln!(out, $($fmt_arg),*).expect("Unable to write to CARGO_BUILD_OUT");
+                if const { !matches!(stringify!($($fmt_arg),*).as_bytes(), b"") } {
+                    writeln!(out, $($fmt_arg),*).expect("Unable to write to CARGO_BUILD_OUT");
+                }
             )*
         });
     }};
@@ -82,12 +83,13 @@ macro_rules! rerun_if_changed {
 #[macro_export]
 macro_rules! rerun_if_env_changed {
     () => {};
-    ( $($($fmt_arg:tt),*);* ) => {{
-        $crate::build_out::CARGO_BUILD_OUT.with(|out| {
-            let mut out = out.borrow_mut();
+    ( $( $( $fmt_arg:tt ),* );* ) => {{
+        $crate::build_out::CARGO_BUILD_OUT.with_borrow_mut(|out| {
             $(
                 write!(out, "cargo::rerun-if-env-changed=").expect("Unable to write to CARGO_BUILD_OUT");
-                writeln!(out, $($fmt_arg),*).expect("Unable to write to CARGO_BUILD_OUT");
+                if const { !matches!(stringify!($($fmt_arg),*).as_bytes(), b"") } {
+                    writeln!(out, $($fmt_arg),*).expect("Unable to write to CARGO_BUILD_OUT");
+                }
             )*
         });
     }};
@@ -378,15 +380,26 @@ macro_rules! rustc_link_arg_benches {
 /// Adds a library to link.
 ///
 /// ```rust
-/// cargo_build::rustc_link_lib!("nghttp2", "libssl", "libcrypto");
+/// cargo_build::rustc_link_lib!("nghttp2"; "libssl"; "libcrypto");
+/// 
+/// cargo_build::rustc_link_lib!(static: "+whole-archive" = "nghttp2"; "libssl");
+/// cargo_build::rustc_link_lib!(dylib: "+verbatim", "+bundle" = "nghttp2"; "libssl");
+/// cargo_build::rustc_link_lib!(framework = "nghttp2"; "libssl");
 ///
 /// cargo_build::rustc_link_lib!(
-///     "nghttp2";
-///     static="libssl";
-///     dylib="libcrypto";
-///     static:+whole-archive="mylib:{rename}", "renamed_lib";
+///     static: "+whole-archive", "+verbatim", "+bundle" =
+///         "nghttp2";
+///         "libssl";
+///         "libcrypto";
+///         "mylib:{}", "renamed_lib";
 /// );
 /// ```
+/// 
+/// Supports variable number of arguments. They are separated by `;` to allow interpolation
+/// using `format!` macro syntax for each argument. Format string and arguments are separated by `,`.
+///
+/// - See [`rustc_link_lib` function](`crate::functions::rustc_link_lib`) if you dont
+/// need strings interpolation and are ok with using `rustc_link_lib(["lib1", "lib2"])` syntax.
 ///
 /// The `rustc-link-lib` instruction tells Cargo to link the given library using the compiler’s
 /// [`-l` flag](https://doc.rust-lang.org/rustc/command-line-arguments.html#option-l-link-lib).
@@ -394,13 +407,10 @@ macro_rules! rustc_link_arg_benches {
 ///
 /// Argument to this function is `LIB` string which which is directly passed to `rustc`.
 /// Currently the fully supported syntax for LIB is `[KIND[:MODIFIERS]=]NAME[:RENAME]`.
-///
+/// 
 /// The optional `KIND` may be one of `dylib`, `static`, or `framework`. See the
 /// [rustc book](https://doc.rust-lang.org/rustc/command-line-arguments.html#option-l-link-lib)
 /// for more detail.
-///
-/// See more specific [`rustc_link_lib_dylib`], [`rustc_link_lib_static`], [`rustc_link_lib_static`],
-/// [`rustc_link_lib_framework`].
 ///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-lib>
 #[macro_export]
@@ -408,9 +418,8 @@ macro_rules! rustc_link_lib {
 
     () => {};
 
-    ( static $(: $mod1:tt $(, $mod2:tt $(, $mod3:tt)? )? )? = $( $($fmt_arg:tt),* );*) => {{
+    ( static $(: $mod1:tt $(, $mod_rem:tt )* )? = $( $($fmt_arg:tt),* );*) => {{
         $crate::build_out::CARGO_BUILD_OUT.with(|out| {
-            
             let closure = move || {
                 let mut out = out.borrow_mut();
                 write!(out, "cargo::rustc-link-lib=static").expect("Unable to write to CARGO_BUILD_OUT");
@@ -418,11 +427,8 @@ macro_rules! rustc_link_lib {
                     write!(out, ":").expect("Unable to write to CARGO_BUILD_OUT");
                     write!(out, $mod1).expect("Unable to write to CARGO_BUILD_OUT");
                     $(
-                        write!(out, ",{}", $mod2).expect("Unable to write to CARGO_BUILD_OUT");
-                        $(
-                            write!(out, ",{}", $mod3).expect("Unable to write to CARGO_BUILD_OUT");
-                        )?
-                    )?
+                        write!(out, ",{}", $mod_rem).expect("Unable to write to CARGO_BUILD_OUT");
+                    )*
                 )?
                 write!(out, "=").expect("Unable to write to CARGO_BUILD_OUT");
             };
@@ -439,27 +445,60 @@ macro_rules! rustc_link_lib {
         });
     }};
 
-    ( framework $(: ($mods:tt),*)? = $( $($fmt_arg:tt),* );* ) => {{
+    ( dylib $(: $mod1:tt $(, $mod_rem:tt )* )? = $( $($fmt_arg:tt),* );*) => {{
         $crate::build_out::CARGO_BUILD_OUT.with(|out| {
-            let mut out = out.borrow_mut();
+            let closure = move || {
+                let mut out = out.borrow_mut();
+                write!(out, "cargo::rustc-link-lib=dylib").expect("Unable to write to CARGO_BUILD_OUT");
+                $(
+                    write!(out, ":").expect("Unable to write to CARGO_BUILD_OUT");
+                    write!(out, $mod1).expect("Unable to write to CARGO_BUILD_OUT");
+                    $(
+                        write!(out, ",{}", $mod_rem).expect("Unable to write to CARGO_BUILD_OUT");
+                    )*
+                )?
+                write!(out, "=").expect("Unable to write to CARGO_BUILD_OUT");
+            };
+
             $(
-                write!(out, "cargo::rustc-link-lib=static=").expect("Unable to write to CARGO_BUILD_OUT");
-                writeln!(out, $($fmt_arg),*).expect("Unable to write to CARGO_BUILD_OUT");
+                if const { !matches!(stringify!($($fmt_arg),*).as_bytes(), b"") } {
+                    
+                    closure();
+
+                    let mut out: std::cell::RefMut<_> = out.borrow_mut();
+                    writeln!(out, $($fmt_arg),*).expect("Unable to write to CARGO_BUILD_OUT");
+                }
             )*
         });
     }};
 
-    ( dylib $(: ($mods:tt),*)? = $( $($fmt_arg:tt),* );* ) => {{
+    ( framework $(: $mod1:tt $(, $mod_rem:tt )* )? = $( $($fmt_arg:tt),* );*) => {{
         $crate::build_out::CARGO_BUILD_OUT.with(|out| {
-            let mut out = out.borrow_mut();
+            let closure = move || {
+                let mut out = out.borrow_mut();
+                write!(out, "cargo::rustc-link-lib=framework").expect("Unable to write to CARGO_BUILD_OUT");
+                $(
+                    write!(out, ":").expect("Unable to write to CARGO_BUILD_OUT");
+                    write!(out, $mod1).expect("Unable to write to CARGO_BUILD_OUT");
+                    $(
+                        write!(out, ",{}", $mod_rem).expect("Unable to write to CARGO_BUILD_OUT");
+                    )*
+                )?
+                write!(out, "=").expect("Unable to write to CARGO_BUILD_OUT");
+            };
+
             $(
-                write!(out, "cargo::rustc-link-lib=static=").expect("Unable to write to CARGO_BUILD_OUT");
-                writeln!(out, $($fmt_arg),*).expect("Unable to write to CARGO_BUILD_OUT");
+                if const { !matches!(stringify!($($fmt_arg),*).as_bytes(), b"") } {
+                    
+                    closure();
+
+                    let mut out: std::cell::RefMut<_> = out.borrow_mut();
+                    writeln!(out, $($fmt_arg),*).expect("Unable to write to CARGO_BUILD_OUT");
+                }
             )*
         });
     }};
     
-    // "lib1"; "lib2:{rename}", "rename"; "lib3"
     ( $( $($fmt_arg:tt),* );* ) => {{
         $crate::build_out::CARGO_BUILD_OUT.with(|out| {
             let mut out = out.borrow_mut();

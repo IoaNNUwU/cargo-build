@@ -67,7 +67,7 @@ fn rerun_if_env_changed_test() {
 
     cargo_build::build_out::set(vec_out.clone());
 
-    cargo_build::rerun_if_env_changed(["VAR1", "VAR2"]);
+    // cargo_build::rerun_if_env_changed!("VAR1", "VAR2");
 
     let out = vec_out.0.read().expect("Unable to aquire Read lock");
     let out: &str = str::from_utf8(&out).unwrap();
@@ -228,48 +228,25 @@ fn rustc_link_arg_benches_test() {
     );
 }
 
-/*
-#[test]
-fn rustc_link_lib_test() {
-    let vec_out = TestWriteVecHandle::new();
-
-    cargo_build::build_out::set(vec_out.clone());
-
-    cargo_build::rustc_link_lib!(
-        "nghttp2";
-        "libssl";
-        "libcrypto"
-    );
-
-    let out = vec_out.0.read().expect("Unable to aquire Read lock");
-    let out: &str = str::from_utf8(&out).unwrap();
-
-    assert_eq!(
-        out,
-        "\
-                cargo::rustc-link-lib=nghttp2\n\
-                cargo::rustc-link-lib=libssl\n\
-                cargo::rustc-link-lib=libcrypto\n"
-    );
-}
-*/
 
 #[test]
-fn rustc_link_lib_test_macro_syntax() {
-    let vec_out = TestWriteVecHandle::new();
+fn rustc_link_lib_test_complex() {
 
+    let vec_out = TestWriteVecHandle::new();
     cargo_build::build_out::set(vec_out.clone());
 
     let rename = "renamed_lib";
 
     cargo_build::rustc_link_lib!(
-        static: "+whole-archive", "+verbatim", "+bundle" = 
+        static: "+whole-archive", "+verbatim", "+bundle", "+bundle" = 
+                    "ff:{}", rename;
                     "ff:{}", rename;
                     "ff:{}", rename;
     );
     
     cargo_build::rustc_link_lib!(
         static: "+whole-archive", "+verbatim", "+bundle" = 
+                    "ff:{}", rename;
                     "ff:{}", rename;
                     "ff:{}", rename
     );
@@ -280,7 +257,9 @@ fn rustc_link_lib_test_macro_syntax() {
     assert_eq!(
         out,
         "\
-                cargo::rustc-link-lib=static:+whole-archive,+verbatim,+bundle=ff:renamed_lib\n\
+                cargo::rustc-link-lib=static:+whole-archive,+verbatim,+bundle,+bundle=ff:renamed_lib\n\
+                cargo::rustc-link-lib=static:+whole-archive,+verbatim,+bundle,+bundle=ff:renamed_lib\n\
+                cargo::rustc-link-lib=static:+whole-archive,+verbatim,+bundle,+bundle=ff:renamed_lib\n\
                 cargo::rustc-link-lib=static:+whole-archive,+verbatim,+bundle=ff:renamed_lib\n\
                 cargo::rustc-link-lib=static:+whole-archive,+verbatim,+bundle=ff:renamed_lib\n\
                 cargo::rustc-link-lib=static:+whole-archive,+verbatim,+bundle=ff:renamed_lib\n"
@@ -288,28 +267,24 @@ fn rustc_link_lib_test_macro_syntax() {
 }
 
 #[test]
-fn rustc_link_lib_test_hard() {
-    let vec_out = TestWriteVecHandle::new();
+fn rustc_link_lib_test_all() {
 
+    let vec_out = TestWriteVecHandle::new();
     cargo_build::build_out::set(vec_out.clone());
 
-    /*
-    cargo_build::rustc_link_lib!(
-        static="nghttp2";
-        dylib="libssl"; 
-        framework="libcrypto"
-    ); 
-    */
-
+    cargo_build::rustc_link_lib!(static: "+whole-archive" = "foo:{}", "renamed_foo" );
+    cargo_build::rustc_link_lib!(dylib: "+whole-archive" = "foo:{}", "renamed_foo" );
+    cargo_build::rustc_link_lib!(framework: "+whole-archive" = "foo:{}", "renamed_foo" );
+    
     let out = vec_out.0.read().expect("Unable to aquire Read lock");
     let out: &str = str::from_utf8(&out).unwrap();
 
     assert_eq!(
         out,
         "\
-                cargo::rustc-link-lib=nghttp2\n\
-                cargo::rustc-link-lib=libssl\n\
-                cargo::rustc-link-lib=libcrypto\n"
+                cargo::rustc-link-lib=static:+whole-archive=foo:renamed_foo\n\
+                cargo::rustc-link-lib=dylib:+whole-archive=foo:renamed_foo\n\
+                cargo::rustc-link-lib=framework:+whole-archive=foo:renamed_foo\n"
     );
 }
 
