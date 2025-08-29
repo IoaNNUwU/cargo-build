@@ -265,6 +265,12 @@ fn rustc_link_lib_test_macro_syntax() {
     cargo_build::rustc_link_lib!(
         static: "+whole-archive", "+verbatim", "+bundle" = 
                     "ff:{}", rename;
+                    "ff:{}", rename;
+    );
+    
+    cargo_build::rustc_link_lib!(
+        static: "+whole-archive", "+verbatim", "+bundle" = 
+                    "ff:{}", rename;
                     "ff:{}", rename
     );
     
@@ -274,6 +280,8 @@ fn rustc_link_lib_test_macro_syntax() {
     assert_eq!(
         out,
         "\
+                cargo::rustc-link-lib=static:+whole-archive,+verbatim,+bundle=ff:renamed_lib\n\
+                cargo::rustc-link-lib=static:+whole-archive,+verbatim,+bundle=ff:renamed_lib\n\
                 cargo::rustc-link-lib=static:+whole-archive,+verbatim,+bundle=ff:renamed_lib\n\
                 cargo::rustc-link-lib=static:+whole-archive,+verbatim,+bundle=ff:renamed_lib\n"
     );

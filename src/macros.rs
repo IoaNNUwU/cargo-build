@@ -410,8 +410,6 @@ macro_rules! rustc_link_lib {
 
     ( static $(: $mod1:tt $(, $mod2:tt $(, $mod3:tt)? )? )? = $( $($fmt_arg:tt),* );*) => {{
         $crate::build_out::CARGO_BUILD_OUT.with(|out| {
-
-            let out: &std::cell::RefCell<_> = out;
             
             let closure = move || {
                 let mut out = out.borrow_mut();
@@ -429,11 +427,11 @@ macro_rules! rustc_link_lib {
                 write!(out, "=").expect("Unable to write to CARGO_BUILD_OUT");
             };
 
-            let out: &std::cell::RefCell<_> = out;
-
             $(
-                closure();
-                {
+                if const { !matches!(stringify!($($fmt_arg),*).as_bytes(), b"") } {
+                    
+                    closure();
+
                     let mut out: std::cell::RefMut<_> = out.borrow_mut();
                     writeln!(out, $($fmt_arg),*).expect("Unable to write to CARGO_BUILD_OUT");
                 }
