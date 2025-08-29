@@ -1,5 +1,5 @@
 use std::{
-    io::Write, path::{Path, PathBuf}, sync::{Arc, RwLock}
+    io::Write, path::PathBuf, sync::{Arc, RwLock}
 };
 
 use crate as cargo_build;

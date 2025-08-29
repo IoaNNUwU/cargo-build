@@ -5,5 +5,18 @@ edition = "2021"
 
 rust-version = "1.84"
 
+authors = ["ioannuwu <https://github.com/IoaNNUwU>"]
+license= "MIT"
+
+description = "`cargo-build` is a wrapper around cargo instructions accesible in build.rs"
+
+repository = "https://github.com/IoaNNUwU/cargo-build"
+homepage = "https://github.com/IoaNNUwU/cargo-build"
+
+readme = "README.md"
+
+keywords = ["config", "macro", "build-rs", "build", "link"]
+categories = ["config", "development-tools::build-utils", "embedded", "no-std::no-alloc", "value-formatting"]
+
 [features]
 macro = []
