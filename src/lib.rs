@@ -84,7 +84,7 @@
 //! against library `bar`, you may want to make sure that library `bar`'s `rustc-link-lib`
 //! instruction appears after instructions to link object `foo`.
 
-#[cfg(feature="macro")]
+#[cfg(feature="macros")]
 mod macros;
 // pub use macros::*; is not needed because #[macro_export] exports them from crate root
 
@@ -97,5 +97,5 @@ pub mod build_out;
 mod functions_test;
 
 #[cfg(test)]
-#[cfg(feature="macro")]
+#[cfg(feature="macros")]
 mod macros_test;

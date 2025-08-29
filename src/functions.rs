@@ -154,8 +154,6 @@ where
 /// to the compiler, but only when building `cdylib` crates. Its usage is highly platform specific.
 /// It is useful to set the shared library version or linker script.
 ///
-/// If you want to pass flags for all supported targets see [`rustc_link_arg`]
-///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-cdylib-link-arg>
 #[allow(private_bounds)]
 pub fn rustc_link_arg_cdylib<I>(linker_flags: impl Into<VarArg<I>>)

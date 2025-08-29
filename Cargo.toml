@@ -19,4 +19,4 @@ keywords = ["config", "macro", "build-rs", "build", "link"]
 categories = ["config", "development-tools::build-utils", "embedded", "no-std::no-alloc", "value-formatting"]
 
 [features]
-macro = []
+macros = []

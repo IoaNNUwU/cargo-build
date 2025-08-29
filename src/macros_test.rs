@@ -12,7 +12,7 @@ fn change_output_test() {
     cargo_build::build_out::set(vec_out.clone());
 
     cargo_build::rerun_if_changed!();
-    cargo_build::rerun_if_changed!("LICENSE.md"; "README.md");
+    cargo_build::rerun_if_changed!("LICENSE.md"; "README.md" ; );
 
     {
         let out = vec_out.0.read().expect("Unable to aquire Read lock");
@@ -126,11 +126,13 @@ fn rustc_link_arg_bin_test() {
 
     cargo_build::build_out::set(vec_out.clone());
 
-    cargo_build::rustc_link_arg_bin("server", ["-Wl,--cref"]);
+    cargo_build::rustc_link_arg_bin!("server": "-Wl,--cref");
 
-    cargo_build::rustc_link_arg_bin(
-        "client",
-        ["-mlongcalls", "-ffunction-sections", "-Wl,--cref"],
+    cargo_build::rustc_link_arg_bin!(
+        "client":
+            "-mlongcalls"; 
+            "-ffunction-sections"; 
+            "-Wl,--cref"
     );
 
     let out = vec_out.0.read().expect("Unable to aquire Read lock");
@@ -226,13 +228,70 @@ fn rustc_link_arg_benches_test() {
     );
 }
 
+/*
 #[test]
 fn rustc_link_lib_test() {
     let vec_out = TestWriteVecHandle::new();
 
     cargo_build::build_out::set(vec_out.clone());
 
-    cargo_build::rustc_link_lib(["nghttp2", "libssl", "libcrypto"]);
+    cargo_build::rustc_link_lib!(
+        "nghttp2";
+        "libssl";
+        "libcrypto"
+    );
+
+    let out = vec_out.0.read().expect("Unable to aquire Read lock");
+    let out: &str = str::from_utf8(&out).unwrap();
+
+    assert_eq!(
+        out,
+        "\
+                cargo::rustc-link-lib=nghttp2\n\
+                cargo::rustc-link-lib=libssl\n\
+                cargo::rustc-link-lib=libcrypto\n"
+    );
+}
+*/
+
+#[test]
+fn rustc_link_lib_test_macro_syntax() {
+    let vec_out = TestWriteVecHandle::new();
+
+    cargo_build::build_out::set(vec_out.clone());
+
+    let rename = "renamed_lib";
+
+    cargo_build::rustc_link_lib!(
+        static: "+whole-archive", "+verbatim", "+bundle" = 
+                    "ff:{}", rename;
+                    "ff:{}", rename
+    );
+    
+    let out = vec_out.0.read().expect("Unable to aquire Read lock");
+    let out: &str = str::from_utf8(&out).unwrap();
+
+    assert_eq!(
+        out,
+        "\
+                cargo::rustc-link-lib=static:+whole-archive,+verbatim,+bundle=ff:renamed_lib\n\
+                cargo::rustc-link-lib=static:+whole-archive,+verbatim,+bundle=ff:renamed_lib\n"
+    );
+}
+
+#[test]
+fn rustc_link_lib_test_hard() {
+    let vec_out = TestWriteVecHandle::new();
+
+    cargo_build::build_out::set(vec_out.clone());
+
+    /*
+    cargo_build::rustc_link_lib!(
+        static="nghttp2";
+        dylib="libssl"; 
+        framework="libcrypto"
+    ); 
+    */
 
     let out = vec_out.0.read().expect("Unable to aquire Read lock");
     let out: &str = str::from_utf8(&out).unwrap();
