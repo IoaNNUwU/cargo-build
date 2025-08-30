@@ -13,18 +13,22 @@
 /// // Note the multiple arguments separated by `;`
 /// cargo_build::rerun_if_changed!("LICENSE.md"; "README.md");
 ///
+/// let ext = ".toml";
+/// let lang = "rust";
+/// 
 /// // Each line follows `format!` macro syntax.
 /// cargo_build::rerun_if_changed!(
-///     "cfg{}", ".toml";
-///     "lib-{}", "rust"
+///     "cfg{}", ext;
+///     "lib-{}", lang;
 /// );
+/// 
 /// // Format runtime variables
 /// let host = std::env::var("OS").unwrap_or("linux".to_string());
 /// cargo_build::rerun_if_changed!("{host}");
 /// ```
 ///
 /// - See [`rerun_if_changed` function](`crate::functions::rerun_if_changed`) if you dont need
-/// strings interpolation and are ok with using `rerun_if_changed(["file1", "file2"])` syntax.
+///   strings interpolation and are ok with using `rerun_if_changed(["file1", "file2"])` syntax.
 ///
 /// Currently, Cargo only uses the filesystem last-modified “mtime” timestamp to determine if the
 /// file has changed. It compares against an internal cached timestamp of when the build script last ran.
@@ -66,7 +70,7 @@ macro_rules! rerun_if_changed {
 /// ```
 ///
 /// - See [`rerun_if_env_changed` function](`crate::functions::rerun_if_env_changed`) if you dont
-/// need strings interpolation and are ok with using `rerun_if_env_changed(["ENV1", "ENV2"])` syntax.
+///   need strings interpolation and are ok with using `rerun_if_env_changed(["ENV1", "ENV2"])` syntax.
 ///
 /// Note that the environment variables here are intended for global environment variables like
 /// `CC` and such, it is not possible to use this for environment variables like `TARGET` that Cargo
@@ -117,7 +121,7 @@ macro_rules! rerun_if_env_changed {
 /// using `format!` macro syntax for each argument. Format string and arguments are separated by `,`.
 ///
 /// - See [`rustc_link_arg` function](`crate::functions::rustc_link_arg`) if you dont
-/// need strings interpolation and are ok with using `rustc_link_arg(["arg1", "arg2"])` syntax.
+///   need strings interpolation and are ok with using `rustc_link_arg(["arg1", "arg2"])` syntax.
 ///
 /// Use this macro to set linker flags for specific targets by providing optional `target`:
 ///
@@ -254,7 +258,7 @@ macro_rules! rustc_link_arg {
 /// using `format!` macro syntax for each argument. Format string and arguments are separated by `,`.
 ///
 /// - See [`rustc_link_lib` function](`crate::functions::rustc_link_lib`) if you dont
-/// need strings interpolation and are ok with using `rustc_link_lib(["lib1", "lib2"])` syntax.
+///   need strings interpolation and are ok with using `rustc_link_lib(["lib1", "lib2"])` syntax.
 ///
 /// The `rustc-link-lib` instruction tells Cargo to link the given library using the compiler’s
 /// [`-l` flag](https://doc.rust-lang.org/rustc/command-line-arguments.html#option-l-link-lib).
@@ -474,7 +478,7 @@ macro_rules! rustc_link_search {
 ///
 /// ```rust
 /// // build.rs
-/// cargo_build::rustc_check_cfgs("custom_cfg");
+/// cargo_build::rustc_check_cfg!("custom_cfg");
 ///
 /// cargo_build::rustc_cfg!("custom_cfg");
 ///
@@ -485,8 +489,8 @@ macro_rules! rustc_link_search {
 /// ```
 /// ```rust
 /// // build.rs
-/// cargo_build::rustc_check_cfg("api_version", ["1", "2", "3"]);
-///
+/// cargo_build::rustc_check_cfg!("api_version": "1", "2", "3");
+/// 
 /// cargo_build::rustc_cfg!("api_version" = "1");
 ///
 /// // main.rs
@@ -501,7 +505,7 @@ macro_rules! rustc_link_search {
 /// This may be used for compile-time detection of features to enable
 /// [conditional compilation](https://doc.rust-lang.org/reference/conditional-compilation.html).
 ///
-/// Custom cfgs must either be defined using the [`rustc_check_cfg`] instruction
+/// Custom cfgs must either be defined using the [`rustc_check_cfg!`] instruction
 /// or usage will need to allow `the unexpected_cfgs lint` to avoid
 /// [unexpected cfgs](https://doc.rust-lang.org/rustc/lints/listing/warn-by-default.html#unexpected-cfgs) warnings.
 ///
@@ -575,7 +579,7 @@ macro_rules! rustc_cfg {
 /// Note that all possible cfgs should be defined, regardless of which cfgs are currently enabled. This includes
 /// all possible values of a given `cfg` name.
 ///
-/// It is recommended to group the [`rustc_check_cfg`] and [`rustc_cfg`] functions as closely
+/// It is recommended to group the [`rustc_check_cfg!`] and [`rustc_cfg!`] functions as closely
 /// as possible in order to avoid typos, missing check-cfg, stale cfgs..
 ///
 /// See also:

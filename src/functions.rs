@@ -839,6 +839,9 @@ impl<'a> From<(&'a str,)> for RustcCfg<'a> {
 ///
 /// It is recommended to group the [`rustc_check_cfg`] and [`rustc_cfg`] functions as closely
 /// as possible in order to avoid typos, missing check-cfg, stale cfgs..
+/// 
+/// See also [`rustc_check_cfg!` macro](`crate::rustc_check_cfg!`) with compile-time checked
+/// formatting, variable number of arguments and improved syntax.
 ///
 /// See also:
 /// - [Conditional compilation example](https://doc.rust-lang.org/cargo/reference/build-script-examples.html#conditional-compilation).
@@ -877,6 +880,9 @@ where
 /// cargo_build::rustc_check_cfgs(["api_v1", "api_v2"]);
 /// cargo_build::rustc_cfg("api_v1");
 /// ```
+/// 
+/// See also [`rustc_check_cfg!` macro](`crate::rustc_check_cfg!`) with compile-time checked
+/// formatting, variable number of arguments and improved syntax.
 #[allow(private_bounds)]
 pub fn rustc_check_cfgs<I>(cfg_names: impl Into<VarArg<I>>)
 where
@@ -906,6 +912,8 @@ where
 /// // main.rs
 /// const EMBEDDED_GIT_HASH: &str = env!("GIT_HASH");
 /// ```
+/// 
+/// See also [`rustc_env!` macro](`crate::rustc_env!`) with improved syntax.
 ///
 /// The `rustc-env` instruction tells Cargo to set the given environment variable when
 /// compiling the package. The value can be then retrieved by the
@@ -988,6 +996,9 @@ pub fn warning(msg: &str) {
 /// cargo_build::rustc_link_search_native(["libs"]);
 /// cargo_build::rustc_link_lib_static(["foo"]);
 /// ```
+/// 
+/// See also [`metadata!` macro](`crate::metadata!`) with compile-time checked
+/// formatting, variable number of arguments and improved syntax.
 ///
 /// This manifest states that the package links to the `libfoo` native library. When using the `links` key, the package must
 /// have a build script, and the build script should use the [`rustc_link_lib`] instruction to link the library.
