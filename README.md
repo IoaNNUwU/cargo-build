@@ -4,10 +4,10 @@
 
 Add this crate as dependency
 ```toml
-[dependencies]
+[build-dependencies]
 cargo-build = "0.7.1" # no macros
 
-[dependencies]
+[build-dependencies]
 cargo-build = { version = "0.7.1", features = ["macros"] }
 ```
 
