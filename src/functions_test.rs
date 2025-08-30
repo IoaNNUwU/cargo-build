@@ -452,6 +452,48 @@ fn rustc_env_test() {
     assert_eq!(out, "cargo::rustc-env=GIT_HASH=1234\n");
 }
 
+#[test]
+fn rustc_warning_test() {
+
+    let vec_out = TestWriteVecHandle::new();
+    cargo_build::build_out::set(vec_out.clone());
+
+    cargo_build::warning("Warning during build process");
+    
+    let out = vec_out.0.read().expect("Unable to aquire Read lock");
+    let out: &str = str::from_utf8(&out).unwrap();
+    
+    assert_eq!(out, "cargo::warning=Warning during build process\n");
+}
+
+#[test]
+fn rustc_error_test() {
+
+    let vec_out = TestWriteVecHandle::new();
+    cargo_build::build_out::set(vec_out.clone());
+
+    cargo_build::error("Fatal error during build process");
+    
+    let out = vec_out.0.read().expect("Unable to aquire Read lock");
+    let out: &str = str::from_utf8(&out).unwrap();
+    
+    assert_eq!(out, "cargo::error=Fatal error during build process\n");
+}
+
+#[test]
+fn metadata_test() {
+
+    let vec_out = TestWriteVecHandle::new();
+    cargo_build::build_out::set(vec_out.clone());
+
+    cargo_build::metadata("META", "DATA");
+    
+    let out = vec_out.0.read().expect("Unable to aquire Read lock");
+    let out: &str = str::from_utf8(&out).unwrap();
+    
+    assert_eq!(out, "cargo::metadata=META=DATA\n");
+}
+
 struct TestWriteVecHandle(Arc<RwLock<Vec<u8>>>);
 
 impl TestWriteVecHandle {

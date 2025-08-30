@@ -114,7 +114,7 @@ where
 /// ```
 ///
 /// See also [`rustc_link_arg!` macro](`crate::rustc_link_arg!`) with compile-time checked
-/// formatting and variable number of arguments.
+/// formatting, variable number of arguments and improved syntax.
 ///
 /// The `rustc-link-arg` instruction tells Cargo to pass the
 /// [`-C link-arg=FLAG` option](https://doc.rust-lang.org/rustc/codegen-options/index.html#link-arg)
@@ -148,6 +148,9 @@ where
 ///         "-Wl,--cref",
 /// ]);
 /// ```
+/// 
+/// See also [`rustc_link_arg!` macro](`crate::rustc_link_arg!`) with compile-time checked
+/// formatting, variable number of arguments and improved syntax.
 ///
 /// The `rustc-link-arg-cdylib` instruction tells Cargo to pass the
 /// [`-C link-arg=FLAG` option](https://doc.rust-lang.org/rustc/codegen-options/index.html#link-arg)
@@ -183,6 +186,9 @@ where
 ///         "-Wl,--cref",
 /// ]);
 /// ```
+/// 
+/// See also [`rustc_link_arg!` macro](`crate::rustc_link_arg!`) with compile-time checked
+/// formatting, variable number of arguments and improved syntax.
 ///
 /// The `rustc-link-arg-bin` instruction tells Cargo to pass the
 /// [`-C link-arg=FLAG` option](https://doc.rust-lang.org/rustc/codegen-options/index.html#link-arg)
@@ -216,6 +222,9 @@ where
 ///         "-Wl,--cref",
 /// ]);
 /// ```
+/// 
+/// See also [`rustc_link_arg!` macro](`crate::rustc_link_arg!`) with compile-time checked
+/// formatting, variable number of arguments and improved syntax.
 ///
 /// The `rustc-link-arg-bins` instruction tells Cargo to pass the
 /// [`-C link-arg=FLAG` option](https://doc.rust-lang.org/rustc/codegen-options/index.html#link-arg)
@@ -248,6 +257,9 @@ where
 ///         "-Wl,--cref",
 /// ]);
 /// ```
+/// 
+/// See also [`rustc_link_arg!` macro](`crate::rustc_link_arg!`) with compile-time checked
+/// formatting, variable number of arguments and improved syntax.
 ///
 /// The `rustc-link-arg-tests` instruction tells Cargo to pass the
 /// [`-C link-arg=FLAG` option](https://doc.rust-lang.org/rustc/codegen-options/index.html#link-arg)
@@ -280,6 +292,9 @@ where
 ///         "-Wl,--cref",
 /// ]);
 /// ```
+/// 
+/// See also [`rustc_link_arg!` macro](`crate::rustc_link_arg!`) with compile-time checked
+/// formatting, variable number of arguments and improved syntax.
 ///
 /// The `rustc-link-arg-examples` instruction tells Cargo to pass the
 /// [`-C link-arg=FLAG` option](https://doc.rust-lang.org/rustc/codegen-options/index.html#link-arg)
@@ -312,6 +327,9 @@ where
 ///         "-Wl,--cref",
 /// ]);
 /// ```
+/// 
+/// See also [`rustc_link_arg!` macro](`crate::rustc_link_arg!`) with compile-time checked
+/// formatting, variable number of arguments and improved syntax.
 ///
 /// The `rustc-link-arg-benches` instruction tells Cargo to pass the
 /// [`-C link-arg=FLAG` option](https://doc.rust-lang.org/rustc/codegen-options/index.html#link-arg)
@@ -345,6 +363,9 @@ where
 ///     "static:+whole-archive=mylib:renamed_lib",
 /// ]);
 /// ```
+/// 
+/// See also [`rustc_link_lib!` macro](`crate::rustc_link_lib!`) with compile-time checked
+/// formatting, variable number of arguments and improved syntax.
 ///
 /// The `rustc-link-lib` instruction tells Cargo to link the given library using the compiler’s
 /// [`-l` flag](https://doc.rust-lang.org/rustc/command-line-arguments.html#option-l-link-lib).
@@ -385,6 +406,9 @@ where
 ///
 /// cargo_build::rustc_link_lib_dylib(":+whole-archive=mylib:renamed_lib");
 /// ```
+/// 
+/// See also [`rustc_link_lib!` macro](`crate::rustc_link_lib!`) with compile-time checked
+/// formatting, variable number of arguments and improved syntax.
 ///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-lib>
 #[allow(private_bounds)]
@@ -408,6 +432,9 @@ where
 ///
 /// cargo_build::rustc_link_lib_static(":+whole-archive=mylib:renamed_lib");
 /// ```
+/// 
+/// See also [`rustc_link_lib!` macro](`crate::rustc_link_lib!`) with compile-time checked
+/// formatting, variable number of arguments and improved syntax.
 ///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-lib>
 #[allow(private_bounds)]
@@ -432,6 +459,9 @@ where
 /// cargo_build::rustc_link_lib_framework(":+whole-archive=mylib:renamed_lib");
 /// ```
 ///
+/// See also [`rustc_link_lib!` macro](`crate::rustc_link_lib!`) with compile-time checked
+/// formatting, variable number of arguments and improved syntax.
+/// 
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-lib>
 #[allow(private_bounds)]
 pub fn rustc_link_lib_framework<I>(lib_names: impl Into<VarArg<I>>)
@@ -467,6 +497,9 @@ where
 /// The optional `KIND` may be one of `dependency`, `crate`, `native`, `framework`, or `all`.
 /// See the [rustc book](https://doc.rust-lang.org/rustc/command-line-arguments.html#option-l-search-path)
 /// for more detail.
+/// 
+/// See also [`rustc_link_search!` macro](`crate::rustc_link_search!`) with compile-time checked
+/// formatting, variable number of arguments and improved syntax.
 ///
 /// See more specific [`rustc_link_search_dependency`], [`rustc_link_search_crate`], [`rustc_link_search_native`],
 /// [`rustc_link_search_framework`], [`rustc_link_search_all`].
@@ -491,6 +524,9 @@ where
 /// ```rust
 /// cargo_build::rustc_link_search_native(["libs", "vendor", "api"]);
 /// ```
+/// 
+/// See also [`rustc_link_search!` macro](`crate::rustc_link_search!`) with compile-time checked
+/// formatting, variable number of arguments and improved syntax.
 ///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-search>
 #[allow(private_bounds)]
@@ -513,6 +549,9 @@ where
 /// cargo_build::rustc_link_search_dependency(["libs", "vendor", "api"]);
 /// ```
 ///
+/// See also [`rustc_link_search!` macro](`crate::rustc_link_search!`) with compile-time checked
+/// formatting, variable number of arguments and improved syntax.
+/// 
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-search>
 #[allow(private_bounds)]
 pub fn rustc_link_search_dependency<I>(lib_paths: impl Into<VarArg<I>>)
@@ -534,6 +573,9 @@ where
 /// cargo_build::rustc_link_search_crate(["libs", "vendor", "api"]);
 /// ```
 ///
+/// See also [`rustc_link_search!` macro](`crate::rustc_link_search!`) with compile-time checked
+/// formatting, variable number of arguments and improved syntax.
+/// 
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-search>
 #[allow(private_bounds)]
 pub fn rustc_link_search_crate<I>(lib_paths: impl Into<VarArg<I>>)
@@ -555,6 +597,9 @@ where
 /// cargo_build::rustc_link_search_framework(["libs", "vendor", "api"]);
 /// ```
 ///
+/// See also [`rustc_link_search!` macro](`crate::rustc_link_search!`) with compile-time checked
+/// formatting, variable number of arguments and improved syntax.
+/// 
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-search>
 #[allow(private_bounds)]
 pub fn rustc_link_search_framework<I>(lib_paths: impl Into<VarArg<I>>)
@@ -576,6 +621,9 @@ where
 /// cargo_build::rustc_link_search_all(["libs", "vendor", "api"]);
 /// ```
 ///
+/// See also [`rustc_link_search!` macro](`crate::rustc_link_search!`) with compile-time checked
+/// formatting, variable number of arguments and improved syntax.
+/// 
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-search>
 #[allow(private_bounds)]
 pub fn rustc_link_search_all<I>(lib_paths: impl Into<VarArg<I>>)
@@ -607,6 +655,10 @@ where
 ///     "-l z"
 /// ]);
 /// ```
+/// 
+/// See also [`rustc_link_search!` macro](`crate::rustc_link_search!`) and 
+/// [`rustc_link_lib!` macro](`crate::rustc_link_lib!`) with compile-time checked
+/// formatting, variable number of arguments and improved syntax.
 ///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-flags>
 #[allow(private_bounds)]
@@ -655,6 +707,8 @@ where
 /// #[cfg(api_version="2")]
 /// fn get_users() -> Vec<String> { todo!() }
 /// ```
+/// 
+/// See also [`rustc_cfg!` macro](`crate::rustc_cfg!`) with improved syntax.
 ///
 /// The `rustc-cfg` instruction tells Cargo to pass the given value to the
 /// [`--cfg` flag](https://doc.rust-lang.org/rustc/command-line-arguments.html#option-cfg) to the compiler.
@@ -899,7 +953,7 @@ pub fn error(msg: &str) {
 /// Displays a warning on the terminal.
 ///  
 /// ```rust
-/// cargo_build::error("Warning during build");
+/// cargo_build::warning("Warning during build");
 /// ```
 ///
 /// See [`warning!` macro](`crate::warning!`) with compile-time checked formatting.
