@@ -5,10 +5,10 @@
 Add this crate as dependency
 ```toml
 [build-dependencies]
-cargo-build = "0.7.1" # no macros
+cargo-build = "0.7.2" # no macros
 
 [build-dependencies]
-cargo-build = { version = "0.7.1", features = ["macros"] }
+cargo-build = { version = "0.7.2", features = ["macros"] }
 ```
 
 <https://doc.rust-lang.org/cargo/reference/build-scripts.html>
