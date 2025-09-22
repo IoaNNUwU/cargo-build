@@ -1,6 +1,6 @@
-use std::{
-    io::Write, path::PathBuf, sync::{Arc, RwLock}
-};
+use std::io::Write;
+use std::path::PathBuf;
+use std::sync::{Arc, RwLock};
 
 use crate as cargo_build;
 
@@ -77,18 +77,18 @@ fn rerun_if_changed_syntax_test() {
 
     let text = String::from("Hello World");
     cargo_build::rerun_if_changed([text]);
-    
+
     let text = String::from("Hello World");
     cargo_build::rerun_if_changed(["hello", &text]);
     cargo_build::rerun_if_changed(["hello", &text, "world"]);
     cargo_build::rerun_if_changed([&text, "world"]);
-    
+
     let text = PathBuf::from("helloworld.txt");
     cargo_build::rerun_if_changed(text);
 
     let text = PathBuf::from("helloworld.txt");
     cargo_build::rerun_if_changed([text]);
-    
+
     let text = PathBuf::from("helloworld.txt");
     cargo_build::rerun_if_changed([&text, &PathBuf::from("hello.txt")]);
     cargo_build::rerun_if_changed(["hello.txt", text.to_str().unwrap()]);
@@ -127,7 +127,7 @@ fn rerun_if_env_changed_syntax_test() {
 
     let text = String::from("Hello World");
     cargo_build::rerun_if_env_changed(text);
-    
+
     let text = String::from("Hello World");
     cargo_build::rerun_if_env_changed(["hello", &text]);
     cargo_build::rerun_if_env_changed(["hello", &text, "world"]);
@@ -323,6 +323,15 @@ fn rustc_link_search_test() {
 }
 
 #[test]
+#[should_panic]
+fn rustc_link_search_invalid_path_test() {
+    let path = "hello/
+    world";
+
+    cargo_build::rustc_link_search(path);
+}
+
+#[test]
 fn rustc_flags_test() {
     let vec_out = TestWriteVecHandle::new();
 
@@ -380,7 +389,7 @@ fn rustc_cfg_test_value_cfg() {
     let vec_out = TestWriteVecHandle::new();
 
     cargo_build::build_out::set(vec_out.clone());
-    
+
     cargo_build::rustc_cfg(("api_version", "1"));
 
     let out = vec_out.0.read().expect("Unable to aquire Read lock");
@@ -402,7 +411,6 @@ fn rustc_check_cfg_test_no_values() {
 
     assert_eq!(out, "cargo::rustc-check-cfg=cfg(api_version)\n");
 }
-
 
 #[test]
 fn rustc_check_cfg_test_single_value() {
@@ -454,43 +462,90 @@ fn rustc_env_test() {
 
 #[test]
 fn rustc_warning_test() {
-
     let vec_out = TestWriteVecHandle::new();
     cargo_build::build_out::set(vec_out.clone());
 
     cargo_build::warning("Warning during build process");
-    
+
     let out = vec_out.0.read().expect("Unable to aquire Read lock");
     let out: &str = str::from_utf8(&out).unwrap();
-    
+
     assert_eq!(out, "cargo::warning=Warning during build process\n");
 }
 
 #[test]
-fn rustc_error_test() {
+fn rustc_multiline_warning_test() {
+    let vec_out = TestWriteVecHandle::new();
+    cargo_build::build_out::set(vec_out.clone());
 
+    cargo_build::warning(
+        "
+Warning 1 during build process
+Warning 2 during build process
+Warning 3 during build process",
+    );
+
+    let out = vec_out.0.read().expect("Unable to aquire Read lock");
+    let out: &str = str::from_utf8(&out).unwrap();
+
+    assert_eq!(
+        out,
+        "cargo::warning=
+cargo::warning=Warning 1 during build process
+cargo::warning=Warning 2 during build process
+cargo::warning=Warning 3 during build process
+"
+    );
+}
+
+#[test]
+fn rustc_error_test() {
     let vec_out = TestWriteVecHandle::new();
     cargo_build::build_out::set(vec_out.clone());
 
     cargo_build::error("Fatal error during build process");
-    
+
     let out = vec_out.0.read().expect("Unable to aquire Read lock");
     let out: &str = str::from_utf8(&out).unwrap();
-    
+
     assert_eq!(out, "cargo::error=Fatal error during build process\n");
 }
 
 #[test]
-fn metadata_test() {
+fn rustc_multiline_error_test() {
+    let vec_out = TestWriteVecHandle::new();
+    cargo_build::build_out::set(vec_out.clone());
 
+    cargo_build::error(
+        "
+Fatal error 1 during build process
+Fatal error 2 during build process
+Fatal error 3 during build process",
+    );
+
+    let out = vec_out.0.read().expect("Unable to aquire Read lock");
+    let out: &str = str::from_utf8(&out).unwrap();
+
+    assert_eq!(
+        out,
+        "cargo::error=
+cargo::error=Fatal error 1 during build process
+cargo::error=Fatal error 2 during build process
+cargo::error=Fatal error 3 during build process
+"
+    );
+}
+
+#[test]
+fn metadata_test() {
     let vec_out = TestWriteVecHandle::new();
     cargo_build::build_out::set(vec_out.clone());
 
     cargo_build::metadata("META", "DATA");
-    
+
     let out = vec_out.0.read().expect("Unable to aquire Read lock");
     let out: &str = str::from_utf8(&out).unwrap();
-    
+
     assert_eq!(out, "cargo::metadata=META=DATA\n");
 }
 

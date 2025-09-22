@@ -15,13 +15,13 @@
 ///
 /// let ext = ".toml";
 /// let lang = "rust";
-/// 
+///
 /// // Each line follows `format!` macro syntax.
 /// cargo_build::rerun_if_changed!(
 ///     "cfg{}", ext;
 ///     "lib-{}", lang;
 /// );
-/// 
+///
 /// // Format runtime variables
 /// let host = std::env::var("OS").unwrap_or("linux".to_string());
 /// cargo_build::rerun_if_changed!("{host}");
@@ -490,7 +490,7 @@ macro_rules! rustc_link_search {
 /// ```rust
 /// // build.rs
 /// cargo_build::rustc_check_cfg!("api_version": "1", "2", "3");
-/// 
+///
 /// cargo_build::rustc_cfg!("api_version" = "1");
 ///
 /// // main.rs
@@ -727,7 +727,6 @@ macro_rules! error {
         });
     };
 }
-
 
 /// Metadata, used by links scripts.
 ///

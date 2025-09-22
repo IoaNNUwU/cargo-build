@@ -1,7 +1,5 @@
-use std::{
-    cell::RefCell,
-    io::{stdout, Write},
-};
+use std::cell::RefCell;
+use std::io::{stdout, Write};
 
 thread_local! {
     pub static CARGO_BUILD_OUT: RefCell<Box<dyn Write>> = RefCell::new(Box::new(stdout()));

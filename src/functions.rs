@@ -1,6 +1,7 @@
-use super::build_out::CARGO_BUILD_OUT;
 use std::io::Write;
 use std::path::{Path, PathBuf};
+
+use super::build_out::CARGO_BUILD_OUT;
 
 const ERR_MSG: &str = "Unable to write to CARGO_BUILD_OUT";
 
@@ -44,10 +45,19 @@ where
     I::Item: AsRef<Path>,
 {
     for file_path in file_paths.into() {
-        let file_path = file_path.as_ref().display();
-        CARGO_BUILD_OUT.with_borrow_mut(|out| {
-            writeln!(out, "cargo::rerun-if-changed={file_path}").expect(ERR_MSG)
-        });
+        let path = file_path.as_ref();
+
+        match path.to_str() {
+            Some(path) => assert!(
+                !path.contains('\n'),
+                "Paths containing newlines cannot be used in the build scripts"
+            ),
+            None => {}
+        }
+        let path = path.display();
+
+        CARGO_BUILD_OUT
+            .with_borrow_mut(|out| writeln!(out, "cargo::rerun-if-changed={path}").expect(ERR_MSG));
     }
 }
 
@@ -87,6 +97,12 @@ where
 {
     for env_var in env_vars.into() {
         let env_var: &str = env_var.as_ref();
+
+        assert!(
+            !env_var.contains('\n'),
+            "Env var names containing newlines cannot be used in the build scripts"
+        );
+
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
             writeln!(out, "cargo::rerun-if-env-changed={env_var}").expect(ERR_MSG)
         });
@@ -131,6 +147,12 @@ where
 {
     for flag in linker_flags.into() {
         let flag = flag.as_ref();
+
+        assert!(
+            !flag.contains('\n'),
+            "Compiler flags containing newlines cannot be used in the build scripts"
+        );
+
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
             writeln!(out, "cargo::rustc-link-arg={flag}").expect(ERR_MSG);
         });
@@ -148,7 +170,7 @@ where
 ///         "-Wl,--cref",
 /// ]);
 /// ```
-/// 
+///
 /// See also [`rustc_link_arg!` macro](`crate::rustc_link_arg!`) with compile-time checked
 /// formatting, variable number of arguments and improved syntax.
 ///
@@ -166,6 +188,12 @@ where
 {
     for flag in linker_flags.into() {
         let flag = flag.as_ref();
+
+        assert!(
+            !flag.contains('\n'),
+            "Compiler flags containing newlines cannot be used in the build scripts"
+        );
+
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
             writeln!(out, "cargo::rustc-link-arg-cdylib={flag}").expect(ERR_MSG)
         });
@@ -186,7 +214,7 @@ where
 ///         "-Wl,--cref",
 /// ]);
 /// ```
-/// 
+///
 /// See also [`rustc_link_arg!` macro](`crate::rustc_link_arg!`) with compile-time checked
 /// formatting, variable number of arguments and improved syntax.
 ///
@@ -205,6 +233,16 @@ where
     for flag in linker_flags.into() {
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
             let flag = flag.as_ref();
+
+            assert!(
+                !bin.contains('\n'),
+                "Binary names containing newlines cannot be used in the build scripts"
+            );
+            assert!(
+                !flag.contains('\n'),
+                "Compiler flags containing newlines cannot be used in the build scripts"
+            );
+
             writeln!(out, "cargo::rustc-link-arg-bin={bin}={flag}").expect(ERR_MSG)
         });
     }
@@ -222,7 +260,7 @@ where
 ///         "-Wl,--cref",
 /// ]);
 /// ```
-/// 
+///
 /// See also [`rustc_link_arg!` macro](`crate::rustc_link_arg!`) with compile-time checked
 /// formatting, variable number of arguments and improved syntax.
 ///
@@ -240,6 +278,12 @@ where
 {
     for flag in linker_flags.into() {
         let flag = flag.as_ref();
+
+        assert!(
+            !flag.contains('\n'),
+            "Compiler flags containing newlines cannot be used in the build scripts"
+        );
+
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
             writeln!(out, "cargo::rustc-link-arg-bins={flag}").expect(ERR_MSG)
         });
@@ -257,7 +301,7 @@ where
 ///         "-Wl,--cref",
 /// ]);
 /// ```
-/// 
+///
 /// See also [`rustc_link_arg!` macro](`crate::rustc_link_arg!`) with compile-time checked
 /// formatting, variable number of arguments and improved syntax.
 ///
@@ -275,6 +319,12 @@ where
 {
     for flag in linker_flags.into() {
         let flag = flag.as_ref();
+
+        assert!(
+            !flag.contains('\n'),
+            "Compiler flags containing newlines cannot be used in the build scripts"
+        );
+
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
             writeln!(out, "cargo::rustc-link-arg-tests={flag}").expect(ERR_MSG)
         });
@@ -292,7 +342,7 @@ where
 ///         "-Wl,--cref",
 /// ]);
 /// ```
-/// 
+///
 /// See also [`rustc_link_arg!` macro](`crate::rustc_link_arg!`) with compile-time checked
 /// formatting, variable number of arguments and improved syntax.
 ///
@@ -310,6 +360,12 @@ where
 {
     for flag in linker_flags.into() {
         let flag = flag.as_ref();
+
+        assert!(
+            !flag.contains('\n'),
+            "Compiler flags containing newlines cannot be used in the build scripts"
+        );
+
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
             writeln!(out, "cargo::rustc-link-arg-examples={flag}").expect(ERR_MSG)
         });
@@ -327,7 +383,7 @@ where
 ///         "-Wl,--cref",
 /// ]);
 /// ```
-/// 
+///
 /// See also [`rustc_link_arg!` macro](`crate::rustc_link_arg!`) with compile-time checked
 /// formatting, variable number of arguments and improved syntax.
 ///
@@ -345,6 +401,12 @@ where
 {
     for flag in linker_flags.into() {
         let flag = flag.as_ref();
+
+        assert!(
+            !flag.contains('\n'),
+            "Compiler flags containing newlines cannot be used in the build scripts"
+        );
+
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
             writeln!(out, "cargo::rustc-link-arg-benches={flag}").expect(ERR_MSG)
         });
@@ -363,7 +425,7 @@ where
 ///     "static:+whole-archive=mylib:renamed_lib",
 /// ]);
 /// ```
-/// 
+///
 /// See also [`rustc_link_lib!` macro](`crate::rustc_link_lib!`) with compile-time checked
 /// formatting, variable number of arguments and improved syntax.
 ///
@@ -377,7 +439,7 @@ where
 /// The optional `KIND` may be one of `dylib`, `static`, or `framework`. See the
 /// [rustc book](https://doc.rust-lang.org/rustc/command-line-arguments.html#option-l-link-lib)
 /// for more detail.
-/// 
+///
 /// Linking modifiers (`[:MODIFIERS]`) are:
 /// - `-whole-archive`(default), `+whole-archive`.
 /// - `+bundle`(default), `-bundle`.
@@ -394,6 +456,12 @@ where
 {
     for lib in lib_names.into() {
         let lib = lib.as_ref();
+
+        assert!(
+            !lib.contains('\n'),
+            "Library names containing newlines cannot be used in the build scripts"
+        );
+
         CARGO_BUILD_OUT
             .with_borrow_mut(|out| writeln!(out, "cargo::rustc-link-lib={lib}").expect(ERR_MSG));
     }
@@ -406,7 +474,7 @@ where
 ///
 /// cargo_build::rustc_link_lib_dylib(":+whole-archive=mylib:renamed_lib");
 /// ```
-/// 
+///
 /// See also [`rustc_link_lib!` macro](`crate::rustc_link_lib!`) with compile-time checked
 /// formatting, variable number of arguments and improved syntax.
 ///
@@ -419,6 +487,12 @@ where
 {
     for lib in lib_names.into() {
         let lib = lib.as_ref();
+
+        assert!(
+            !lib.contains('\n'),
+            "Library names containing newlines cannot be used in the build scripts"
+        );
+
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
             writeln!(out, "cargo::rustc-link-lib=dylib={lib}").expect(ERR_MSG)
         });
@@ -432,7 +506,7 @@ where
 ///
 /// cargo_build::rustc_link_lib_static(":+whole-archive=mylib:renamed_lib");
 /// ```
-/// 
+///
 /// See also [`rustc_link_lib!` macro](`crate::rustc_link_lib!`) with compile-time checked
 /// formatting, variable number of arguments and improved syntax.
 ///
@@ -445,6 +519,12 @@ where
 {
     for lib in lib_names.into() {
         let lib = lib.as_ref();
+
+        assert!(
+            !lib.contains('\n'),
+            "Library names containing newlines cannot be used in the build scripts"
+        );
+
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
             writeln!(out, "cargo::rustc-link-lib=static={lib}").expect(ERR_MSG)
         });
@@ -461,7 +541,7 @@ where
 ///
 /// See also [`rustc_link_lib!` macro](`crate::rustc_link_lib!`) with compile-time checked
 /// formatting, variable number of arguments and improved syntax.
-/// 
+///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-lib>
 #[allow(private_bounds)]
 pub fn rustc_link_lib_framework<I>(lib_names: impl Into<VarArg<I>>)
@@ -471,6 +551,12 @@ where
 {
     for lib in lib_names.into() {
         let lib = lib.as_ref();
+
+        assert!(
+            !lib.contains('\n'),
+            "Library names containing newlines cannot be used in the build scripts"
+        );
+
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
             writeln!(out, "cargo::rustc-link-lib=framework={lib}").expect(ERR_MSG)
         });
@@ -497,7 +583,7 @@ where
 /// The optional `KIND` may be one of `dependency`, `crate`, `native`, `framework`, or `all`.
 /// See the [rustc book](https://doc.rust-lang.org/rustc/command-line-arguments.html#option-l-search-path)
 /// for more detail.
-/// 
+///
 /// See also [`rustc_link_search!` macro](`crate::rustc_link_search!`) with compile-time checked
 /// formatting, variable number of arguments and improved syntax.
 ///
@@ -512,7 +598,17 @@ where
     I::Item: AsRef<Path>,
 {
     for path in lib_paths.into() {
-        let path = path.as_ref().display();
+        let path = path.as_ref();
+
+        match path.to_str() {
+            Some(path) => assert!(
+                !path.contains('\n'),
+                "Library paths containing newlines cannot be used in the build scripts"
+            ),
+            None => {}
+        }
+        let path = path.display();
+
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
             writeln!(out, "cargo::rustc-link-search={}", path).expect(ERR_MSG);
         });
@@ -524,7 +620,7 @@ where
 /// ```rust
 /// cargo_build::rustc_link_search_native(["libs", "vendor", "api"]);
 /// ```
-/// 
+///
 /// See also [`rustc_link_search!` macro](`crate::rustc_link_search!`) with compile-time checked
 /// formatting, variable number of arguments and improved syntax.
 ///
@@ -536,7 +632,17 @@ where
     I::Item: AsRef<Path>,
 {
     for path in lib_paths.into() {
-        let path = path.as_ref().display();
+        let path = path.as_ref();
+
+        match path.to_str() {
+            Some(path) => assert!(
+                !path.contains('\n'),
+                "Library paths containing newlines cannot be used in the build scripts"
+            ),
+            None => {}
+        }
+        let path = path.display();
+
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
             writeln!(out, "cargo::rustc-link-search=native={path}").expect(ERR_MSG);
         });
@@ -551,7 +657,7 @@ where
 ///
 /// See also [`rustc_link_search!` macro](`crate::rustc_link_search!`) with compile-time checked
 /// formatting, variable number of arguments and improved syntax.
-/// 
+///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-search>
 #[allow(private_bounds)]
 pub fn rustc_link_search_dependency<I>(lib_paths: impl Into<VarArg<I>>)
@@ -560,7 +666,17 @@ where
     I::Item: AsRef<Path>,
 {
     for path in lib_paths.into() {
-        let path = path.as_ref().display();
+        let path = path.as_ref();
+
+        match path.to_str() {
+            Some(path) => assert!(
+                !path.contains('\n'),
+                "Library paths containing newlines cannot be used in the build scripts"
+            ),
+            None => {}
+        }
+        let path = path.display();
+
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
             writeln!(out, "cargo::rustc-link-search=dependency={path}").expect(ERR_MSG);
         });
@@ -575,7 +691,7 @@ where
 ///
 /// See also [`rustc_link_search!` macro](`crate::rustc_link_search!`) with compile-time checked
 /// formatting, variable number of arguments and improved syntax.
-/// 
+///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-search>
 #[allow(private_bounds)]
 pub fn rustc_link_search_crate<I>(lib_paths: impl Into<VarArg<I>>)
@@ -584,7 +700,17 @@ where
     I::Item: AsRef<Path>,
 {
     for path in lib_paths.into() {
-        let path = path.as_ref().display();
+        let path = path.as_ref();
+
+        match path.to_str() {
+            Some(path) => assert!(
+                !path.contains('\n'),
+                "Library paths containing newlines cannot be used in the build scripts"
+            ),
+            None => {}
+        }
+        let path = path.display();
+
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
             writeln!(out, "cargo::rustc-link-search=crate={path}").expect(ERR_MSG);
         });
@@ -599,7 +725,7 @@ where
 ///
 /// See also [`rustc_link_search!` macro](`crate::rustc_link_search!`) with compile-time checked
 /// formatting, variable number of arguments and improved syntax.
-/// 
+///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-search>
 #[allow(private_bounds)]
 pub fn rustc_link_search_framework<I>(lib_paths: impl Into<VarArg<I>>)
@@ -608,7 +734,17 @@ where
     I::Item: AsRef<Path>,
 {
     for path in lib_paths.into() {
-        let path = path.as_ref().display();
+        let path = path.as_ref();
+
+        match path.to_str() {
+            Some(path) => assert!(
+                !path.contains('\n'),
+                "Library paths containing newlines cannot be used in the build scripts"
+            ),
+            None => {}
+        }
+        let path = path.display();
+
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
             writeln!(out, "cargo::rustc-link-search=framework={path}").expect(ERR_MSG);
         });
@@ -623,7 +759,7 @@ where
 ///
 /// See also [`rustc_link_search!` macro](`crate::rustc_link_search!`) with compile-time checked
 /// formatting, variable number of arguments and improved syntax.
-/// 
+///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-search>
 #[allow(private_bounds)]
 pub fn rustc_link_search_all<I>(lib_paths: impl Into<VarArg<I>>)
@@ -632,7 +768,17 @@ where
     I::Item: AsRef<Path>,
 {
     for path in lib_paths.into() {
-        let path = path.as_ref().display();
+        let path = path.as_ref();
+
+        match path.to_str() {
+            Some(path) => assert!(
+                !path.contains('\n'),
+                "Library paths containing newlines cannot be used in the build scripts"
+            ),
+            None => {}
+        }
+        let path = path.display();
+
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
             writeln!(out, "cargo::rustc-link-search=all={path}").expect(ERR_MSG)
         });
@@ -655,8 +801,8 @@ where
 ///     "-l z"
 /// ]);
 /// ```
-/// 
-/// See also [`rustc_link_search!` macro](`crate::rustc_link_search!`) and 
+///
+/// See also [`rustc_link_search!` macro](`crate::rustc_link_search!`) and
 /// [`rustc_link_lib!` macro](`crate::rustc_link_lib!`) with compile-time checked
 /// formatting, variable number of arguments and improved syntax.
 ///
@@ -669,6 +815,12 @@ where
 {
     for flag in flags.into() {
         let flag = flag.as_ref();
+
+        assert!(
+            !flag.contains('\n'),
+            "Rustc flags containing newlines cannot be used in the build scripts"
+        );
+
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
             writeln!(out, "cargo::rustc-flags={flag}").expect(ERR_MSG);
         });
@@ -707,7 +859,7 @@ where
 /// #[cfg(api_version="2")]
 /// fn get_users() -> Vec<String> { todo!() }
 /// ```
-/// 
+///
 /// See also [`rustc_cfg!` macro](`crate::rustc_cfg!`) with improved syntax.
 ///
 /// The `rustc-cfg` instruction tells Cargo to pass the given value to the
@@ -742,9 +894,21 @@ where
 #[allow(private_bounds)]
 pub fn rustc_cfg<'a>(cfg: impl Into<RustcCfg<'a>>) {
     let RustcCfg { name, value } = cfg.into();
+
+    assert!(
+        !name.contains('\n'),
+        "Cfg names containing newlines cannot be used in the build scripts"
+    );
+
     CARGO_BUILD_OUT.with_borrow_mut(|out| match value {
         None => writeln!(out, "cargo::rustc-cfg={name}").expect(ERR_MSG),
-        Some(value) => writeln!(out, "cargo::rustc-cfg={name}=\"{value}\"").expect(ERR_MSG),
+        Some(value) => {
+            assert!(
+                !value.contains('\n'),
+                "Cfg values containing newlines cannot be used in the build scripts"
+            );
+            writeln!(out, "cargo::rustc-cfg={name}=\"{value}\"").expect(ERR_MSG);
+        }
     });
 }
 
@@ -813,13 +977,13 @@ impl<'a> From<(&'a str,)> for RustcCfg<'a> {
 /// ```rust
 /// // build.rs
 /// cargo_build::rustc_check_cfgs("custom_cfg");
-/// 
+///
 /// cargo_build::rustc_cfg("custom_cfg");
 ///
 /// // main.rs
 /// #[cfg(custom_cfg)]
 /// mod optional_mod;
-/// 
+///
 /// ```
 /// ```
 /// // build.rs
@@ -839,7 +1003,7 @@ impl<'a> From<(&'a str,)> for RustcCfg<'a> {
 ///
 /// It is recommended to group the [`rustc_check_cfg`] and [`rustc_cfg`] functions as closely
 /// as possible in order to avoid typos, missing check-cfg, stale cfgs..
-/// 
+///
 /// See also [`rustc_check_cfg!` macro](`crate::rustc_check_cfg!`) with compile-time checked
 /// formatting, variable number of arguments and improved syntax.
 ///
@@ -855,10 +1019,22 @@ where
     I: IntoIterator,
     I::Item: AsRef<str>,
 {
+    assert!(
+        !name.contains('\n'),
+        "Cfg names containing newlines cannot be used in the build scripts"
+    );
+
     let values: String = values
         .into()
         .into_iter()
-        .map(|e| format!("\"{}\"", e.as_ref()))
+        .map(|value| {
+            let value = value.as_ref();
+            assert!(
+                !value.contains('\n'),
+                "Cfg values containing newlines cannot be used in the build scripts"
+            );
+            format!("\"{}\"", value)
+        })
         .collect::<Vec<String>>()
         .join(", ");
 
@@ -880,7 +1056,7 @@ where
 /// cargo_build::rustc_check_cfgs(["api_v1", "api_v2"]);
 /// cargo_build::rustc_cfg("api_v1");
 /// ```
-/// 
+///
 /// See also [`rustc_check_cfg!` macro](`crate::rustc_check_cfg!`) with compile-time checked
 /// formatting, variable number of arguments and improved syntax.
 #[allow(private_bounds)]
@@ -891,6 +1067,12 @@ where
 {
     for name in cfg_names.into() {
         let name = name.as_ref();
+
+        assert!(
+            !name.contains('\n'),
+            "Cfg names containing newlines cannot be used in the build scripts"
+        );
+
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
             writeln!(out, "cargo::rustc-check-cfg=cfg({name})").expect(ERR_MSG);
         });
@@ -912,7 +1094,7 @@ where
 /// // main.rs
 /// const EMBEDDED_GIT_HASH: &str = env!("GIT_HASH");
 /// ```
-/// 
+///
 /// See also [`rustc_env!` macro](`crate::rustc_env!`) with improved syntax.
 ///
 /// The `rustc-env` instruction tells Cargo to set the given environment variable when
@@ -930,6 +1112,15 @@ where
 ///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-env>
 pub fn rustc_env(var: &str, value: &str) {
+    assert!(
+        !var.contains('\n'),
+        "Env variables containing newlines cannot be used in the build scripts"
+    );
+    assert!(
+        !value.contains('\n'),
+        "Env variable values containing newlines cannot be used in the build scripts"
+    );
+
     CARGO_BUILD_OUT.with_borrow_mut(|out| {
         writeln!(out, "cargo::rustc-env={var}={value}").expect(ERR_MSG);
     });
@@ -940,7 +1131,11 @@ pub fn rustc_env(var: &str, value: &str) {
 /// #### This error fails the build even if all the other steps finished successfully.
 ///
 /// ```rust
-/// cargo_build::error("Fatal error during build");
+/// cargo_build::error("Fatal error during build process");
+///
+/// cargo_build::error("Fatal multi
+/// line error
+/// during build process");
 /// ```
 ///
 /// See [`error!` macro](`crate::error!`) with compile-time checked formatting.
@@ -954,14 +1149,20 @@ pub fn rustc_env(var: &str, value: &str) {
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#cargo-error>
 pub fn error(msg: &str) {
     CARGO_BUILD_OUT.with_borrow_mut(|out| {
-        writeln!(out, "cargo::error={msg}").expect(ERR_MSG);
+        for line in msg.lines() {
+            writeln!(out, "cargo::error={line}").expect(ERR_MSG);
+        }
     });
 }
 
 /// Displays a warning on the terminal.
 ///  
 /// ```rust
-/// cargo_build::warning("Warning during build");
+/// cargo_build::warning("Warning during build process");
+///
+/// cargo_build::warning("Multi line
+/// warning
+/// during build process");
 /// ```
 ///
 /// See [`warning!` macro](`crate::warning!`) with compile-time checked formatting.
@@ -974,7 +1175,9 @@ pub fn error(msg: &str) {
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#cargo-warning>
 pub fn warning(msg: &str) {
     CARGO_BUILD_OUT.with_borrow_mut(|out| {
-        writeln!(out, "cargo::warning={msg}").expect(ERR_MSG);
+        for line in msg.lines() {
+            writeln!(out, "cargo::warning={line}").expect(ERR_MSG);
+        }
     });
 }
 
@@ -996,7 +1199,7 @@ pub fn warning(msg: &str) {
 /// cargo_build::rustc_link_search_native(["libs"]);
 /// cargo_build::rustc_link_lib_static(["foo"]);
 /// ```
-/// 
+///
 /// See also [`metadata!` macro](`crate::metadata!`) with compile-time checked
 /// formatting, variable number of arguments and improved syntax.
 ///
@@ -1020,6 +1223,15 @@ pub fn warning(msg: &str) {
 ///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#the-links-manifest-key>
 pub fn metadata(key: &str, value: &str) {
+    assert!(
+        !key.contains('\n'),
+        "Metadata keys containing newlines cannot be used in the build scripts"
+    );
+    assert!(
+        !value.contains('\n'),
+        "Metadata values containing newlines cannot be used in the build scripts"
+    );
+
     CARGO_BUILD_OUT.with_borrow_mut(|out| {
         writeln!(out, "cargo::metadata={key}={value}").expect(ERR_MSG);
     });
@@ -1036,7 +1248,7 @@ pub fn metadata(key: &str, value: &str) {
 /// ```
 /// cargo_build::rustc_link_lib("foo");
 /// cargo_build::rustc_link_lib(["bar", "baz"]);
-/// 
+///
 /// let api = std::env::var("API_LIB_NAME").unwrap_or("api".to_string());
 /// cargo_build::rustc_link_lib(format!("{}", api));
 /// ```

@@ -1,7 +1,5 @@
-use std::{
-    io::Write,
-    sync::{Arc, RwLock},
-};
+use std::io::Write;
+use std::sync::{Arc, RwLock};
 
 use crate as cargo_build;
 
@@ -140,8 +138,8 @@ fn rustc_link_arg_bin_test() {
 
     cargo_build::rustc_link_arg!(
         bin "client":
-            "-mlongcalls"; 
-            "-ffunction-sections"; 
+            "-mlongcalls";
+            "-ffunction-sections";
             "-Wl,--cref"
     );
 
@@ -238,29 +236,27 @@ fn rustc_link_arg_benches_test() {
     );
 }
 
-
 #[test]
 fn rustc_link_lib_test_complex() {
-
     let vec_out = TestWriteVecHandle::new();
     cargo_build::build_out::set(vec_out.clone());
 
     let rename = "renamed_lib";
 
     cargo_build::rustc_link_lib!(
-        static: "+whole-archive", "+verbatim", "+bundle", "+bundle" = 
+        static: "+whole-archive", "+verbatim", "+bundle", "+bundle" =
                     "ff:{}", rename;
                     "ff:{}", rename;
                     "ff:{}", rename;
     );
-    
+
     cargo_build::rustc_link_lib!(
-        static: "+whole-archive", "+verbatim", "+bundle" = 
+        static: "+whole-archive", "+verbatim", "+bundle" =
                     "ff:{}", rename;
                     "ff:{}", rename;
                     "ff:{}", rename
     );
-    
+
     let out = vec_out.0.read().expect("Unable to aquire Read lock");
     let out: &str = str::from_utf8(&out).unwrap();
 
@@ -278,14 +274,13 @@ fn rustc_link_lib_test_complex() {
 
 #[test]
 fn rustc_link_lib_test_all() {
-
     let vec_out = TestWriteVecHandle::new();
     cargo_build::build_out::set(vec_out.clone());
 
     cargo_build::rustc_link_lib!(static: "+whole-archive" = "foo:{}", "renamed_foo" );
     cargo_build::rustc_link_lib!(dylib: "+whole-archive" = "foo:{}", "renamed_foo" );
     cargo_build::rustc_link_lib!(framework: "+whole-archive" = "foo:{}", "renamed_foo" );
-    
+
     let out = vec_out.0.read().expect("Unable to aquire Read lock");
     let out: &str = str::from_utf8(&out).unwrap();
 
@@ -306,8 +301,8 @@ fn rustc_link_search_test() {
 
     cargo_build::rustc_link_search!("common_libs");
 
-    cargo_build::rustc_link_search!(native="libs");
-    
+    cargo_build::rustc_link_search!(native = "libs");
+
     cargo_build::rustc_link_search!(
         framework:
             "mac_os_libs";
@@ -381,12 +376,12 @@ fn rustc_check_cfgs_test() {
     let out = vec_out.0.read().expect("Unable to aquire Read lock");
     let out: &str = str::from_utf8(&out).unwrap();
 
-    assert_eq!(out, 
+    assert_eq!(
+        out,
         "cargo::rustc-check-cfg=cfg(api_v1)\n\
          cargo::rustc-check-cfg=cfg(api_v2)\n"
     );
 }
-
 
 #[test]
 fn rustc_check_cfg_test_single_value() {
@@ -455,45 +450,42 @@ fn rustc_env_test() {
 
 #[test]
 fn rustc_warning_test() {
-
     let vec_out = TestWriteVecHandle::new();
     cargo_build::build_out::set(vec_out.clone());
 
     let err = 10;
     cargo_build::warning!("Warning during build process {}", err);
-    
+
     let out = vec_out.0.read().expect("Unable to aquire Read lock");
     let out: &str = str::from_utf8(&out).unwrap();
-    
+
     assert_eq!(out, "cargo::warning=Warning during build process 10\n");
 }
 
 #[test]
 fn rustc_error_test() {
-
     let vec_out = TestWriteVecHandle::new();
     cargo_build::build_out::set(vec_out.clone());
 
     let err = 10;
     cargo_build::error!("Fatal error during build process {}", err);
-    
+
     let out = vec_out.0.read().expect("Unable to aquire Read lock");
     let out: &str = str::from_utf8(&out).unwrap();
-    
+
     assert_eq!(out, "cargo::error=Fatal error during build process 10\n");
 }
 
 #[test]
 fn metadata_test() {
-
     let vec_out = TestWriteVecHandle::new();
     cargo_build::build_out::set(vec_out.clone());
 
     cargo_build::metadata!("META" = "DATA");
-    
+
     let out = vec_out.0.read().expect("Unable to aquire Read lock");
     let out: &str = str::from_utf8(&out).unwrap();
-    
+
     assert_eq!(out, "cargo::metadata=META=DATA\n");
 }
 
