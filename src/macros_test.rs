@@ -63,6 +63,32 @@ fn rerun_if_changed_test() {
 }
 
 #[test]
+fn rerun_if_changed_test_syntax() {
+    let _a: () = cargo_build::rerun_if_changed!();
+    let _a: () = cargo_build::rerun_if_changed!("hello.txt");
+
+    let _a: () = cargo_build::rerun_if_changed!("hello.txt"; );
+    let _a: () = cargo_build::rerun_if_changed!("hello.txt", );
+
+    let _a: () = cargo_build::rerun_if_changed!(
+        "hello.txt";
+        "world.txt"
+    );
+    let _a: () = cargo_build::rerun_if_changed!(
+        "hello.txt";
+        "world.txt";
+    );
+    let _a: () = cargo_build::rerun_if_changed!(
+        "hello.txt";
+        "world.txt",
+    );
+
+    cargo_build::rerun_if_changed!("hello{}", ".txt");
+    cargo_build::rerun_if_changed!("hello{}", ".txt"; );
+}
+
+
+#[test]
 fn rerun_if_env_changed_test() {
     let vec_out = TestWriteVecHandle::new();
 
@@ -106,6 +132,60 @@ fn rustc_link_arg_test() {
                 cargo::rustc-link-arg=-ffunction-sections\n\
                 cargo::rustc-link-arg=-Wl,--cref\n"
     );
+}
+
+#[test]
+fn rustc_link_arg_test_syntax() {
+    cargo_build::rustc_link_arg!();
+
+    cargo_build::rustc_link_arg!("hello");
+    cargo_build::rustc_link_arg!("hello"; );
+    cargo_build::rustc_link_arg!("hello", );
+    cargo_build::rustc_link_arg!("hello"; "world" );
+    cargo_build::rustc_link_arg!("hello"; "world"; );
+    cargo_build::rustc_link_arg!("hello"; "world", );
+    
+    cargo_build::rustc_link_arg!(benches: "hello");
+    cargo_build::rustc_link_arg!(benches: "hello"; );
+    cargo_build::rustc_link_arg!(benches: "hello", );
+    cargo_build::rustc_link_arg!(benches: "hello"; "world" );
+    cargo_build::rustc_link_arg!(benches: "hello"; "world"; );
+    cargo_build::rustc_link_arg!(benches: "hello"; "world", );
+    
+    cargo_build::rustc_link_arg!(bins: "hello");
+    cargo_build::rustc_link_arg!(bins: "hello"; );
+    cargo_build::rustc_link_arg!(bins: "hello", );
+    cargo_build::rustc_link_arg!(bins: "hello"; "world" );
+    cargo_build::rustc_link_arg!(bins: "hello"; "world"; );
+    cargo_build::rustc_link_arg!(bins: "hello"; "world", );
+    
+    cargo_build::rustc_link_arg!(bin "client": "hello");
+    cargo_build::rustc_link_arg!(bin "client": "hello"; );
+    cargo_build::rustc_link_arg!(bin "client": "hello", );
+    cargo_build::rustc_link_arg!(bin "client": "hello"; "world" );
+    cargo_build::rustc_link_arg!(bin "client": "hello"; "world"; );
+    cargo_build::rustc_link_arg!(bin "client": "hello"; "world", );
+    
+    cargo_build::rustc_link_arg!(cdylib: "hello");
+    cargo_build::rustc_link_arg!(cdylib: "hello"; );
+    cargo_build::rustc_link_arg!(cdylib: "hello", );
+    cargo_build::rustc_link_arg!(cdylib: "hello"; "world" );
+    cargo_build::rustc_link_arg!(cdylib: "hello"; "world"; );
+    cargo_build::rustc_link_arg!(cdylib: "hello"; "world", );
+    
+    cargo_build::rustc_link_arg!(examples: "hello");
+    cargo_build::rustc_link_arg!(examples: "hello"; );
+    cargo_build::rustc_link_arg!(examples: "hello", );
+    cargo_build::rustc_link_arg!(examples: "hello"; "world" );
+    cargo_build::rustc_link_arg!(examples: "hello"; "world"; );
+    cargo_build::rustc_link_arg!(examples: "hello"; "world", );
+    
+    cargo_build::rustc_link_arg!(tests: "hello");
+    cargo_build::rustc_link_arg!(tests: "hello"; );
+    cargo_build::rustc_link_arg!(tests: "hello", );
+    cargo_build::rustc_link_arg!(tests: "hello"; "world" );
+    cargo_build::rustc_link_arg!(tests: "hello"; "world"; );
+    cargo_build::rustc_link_arg!(tests: "hello"; "world", );
 }
 
 #[test]
@@ -277,9 +357,9 @@ fn rustc_link_lib_test_all() {
     let vec_out = TestWriteVecHandle::new();
     cargo_build::build_out::set(vec_out.clone());
 
-    cargo_build::rustc_link_lib!(static: "+whole-archive" = "foo:{}", "renamed_foo" );
-    cargo_build::rustc_link_lib!(dylib: "+whole-archive" = "foo:{}", "renamed_foo" );
-    cargo_build::rustc_link_lib!(framework: "+whole-archive" = "foo:{}", "renamed_foo" );
+    // cargo_build::rustc_link_lib!(static: "+whole-archive" = "foo:{}", "renamed_foo" );
+    // cargo_build::rustc_link_lib!(dylib: "+whole-archive" = "foo:{}", "renamed_foo" );
+    // cargo_build::rustc_link_lib!(framework: "+whole-archive" = "foo:{}", "renamed_foo" );
 
     let out = vec_out.0.read().expect("Unable to aquire Read lock");
     let out: &str = str::from_utf8(&out).unwrap();

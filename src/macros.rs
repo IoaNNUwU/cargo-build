@@ -44,16 +44,14 @@
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rerun-if-changed>
 #[macro_export]
 macro_rules! rerun_if_changed {
-    () => {};
-    ( $($($fmt_arg:tt),*);* ) => {{
-        $crate::build_out::CARGO_BUILD_OUT.with_borrow_mut(|out| {
-            $(
-                if const { !matches!(stringify!($($fmt_arg),*).as_bytes(), b"") } {
-                    write!(out, "cargo::rerun-if-changed=").expect("Unable to write to CARGO_BUILD_OUT");
-                    writeln!(out, $($fmt_arg),*).expect("Unable to write to CARGO_BUILD_OUT");
-                }
-            )*
-        });
+    () => {{}};
+    ( $($fmt_arg:tt),* ) => {{
+        $crate::rerun_if_changed(format!($($fmt_arg),*));
+    }};
+    ( $($($fmt_arg:tt),* $(,)? );* ) => {{
+        $(
+            $crate::rerun_if_changed!($($fmt_arg),*);
+        )*
     }};
 }
 
@@ -86,16 +84,14 @@ macro_rules! rerun_if_changed {
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rerun-if-env-changed>
 #[macro_export]
 macro_rules! rerun_if_env_changed {
-    () => {};
-    ( $( $( $fmt_arg:tt ),* );* ) => {{
-        $crate::build_out::CARGO_BUILD_OUT.with_borrow_mut(|out| {
-            $(
-                if const { !matches!(stringify!($($fmt_arg),*).as_bytes(), b"") } {
-                    write!(out, "cargo::rerun-if-env-changed=").expect("Unable to write to CARGO_BUILD_OUT");
-                    writeln!(out, $($fmt_arg),*).expect("Unable to write to CARGO_BUILD_OUT");
-                }
-            )*
-        });
+    () => {{}};
+    ( $($fmt_arg:tt),* ) => {{
+        $crate::rerun_if_env_changed(format!($($fmt_arg),*));
+    }};
+    ( $($($fmt_arg:tt),* $(,)? );* ) => {{
+        $(
+            $crate::rerun_if_env_changed!($($fmt_arg),*);
+        )*
     }};
 }
 
@@ -133,6 +129,7 @@ macro_rules! rerun_if_env_changed {
 /// cargo_build::rustc_link_arg!(tests: "-mlongcalls"; "-ffunction-sections");
 ///
 /// ```
+/// `bin` Example:
 ///
 /// ```rust
 /// cargo_build::rustc_link_arg!(bin "server": "-mlongcalls"; "-ffunction-sections");
@@ -155,84 +152,74 @@ macro_rules! rerun_if_env_changed {
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-arg>
 #[macro_export]
 macro_rules! rustc_link_arg {
-    () => {};
-    ( $($($fmt_arg:tt),*);* ) => {{
-        $crate::build_out::CARGO_BUILD_OUT.with_borrow_mut(|out| {
-            $(
-                if const { !matches!(stringify!($($fmt_arg),*).as_bytes(), b"") } {
-                    write!(out, "cargo::rustc-link-arg=").expect("Unable to write to CARGO_BUILD_OUT");
-                    writeln!(out, $($fmt_arg),*).expect("Unable to write to CARGO_BUILD_OUT");
-                }
-            )*
-        });
+    () => {{}};
+    ( $($fmt_arg:tt),* ) => {{
+        $crate::rustc_link_arg(format!($($fmt_arg),*));
+    }};
+    ( $($($fmt_arg:tt),* $(,)? );* ) => {{
+        $(
+            $crate::rustc_link_arg!($($fmt_arg),*);
+        )*
     }};
 
-    ( benches: $($($fmt_arg:tt),*);* ) => {{
-        $crate::build_out::CARGO_BUILD_OUT.with_borrow_mut(|out| {
-            $(
-                if const { !matches!(stringify!($($fmt_arg),*).as_bytes(), b"") } {
-                    write!(out, "cargo::rustc-link-arg-benches=").expect("Unable to write to CARGO_BUILD_OUT");
-                    writeln!(out, $($fmt_arg),*).expect("Unable to write to CARGO_BUILD_OUT");
-                }
-            )*
-        });
+    ( benches: ) => {{}};
+    ( benches: $($fmt_arg:tt),* ) => {{
+        $crate::rustc_link_arg_benches(format!($($fmt_arg),*));
+    }};
+    ( benches: $($($fmt_arg:tt),* $(,)? );* ) => {{
+        $(
+            $crate::rustc_link_arg!(benches: $($fmt_arg),*);
+        )*
     }};
 
-    ( bins: $($($fmt_arg:tt),*);* ) => {{
-        $crate::build_out::CARGO_BUILD_OUT.with(|out| {
-            let mut out = out.borrow_mut();
-            $(
-                if const { !matches!(stringify!($($fmt_arg),*).as_bytes(), b"") } {
-                    write!(out, "cargo::rustc-link-arg-bins=").expect("Unable to write to CARGO_BUILD_OUT");
-                    writeln!(out, $($fmt_arg),*).expect("Unable to write to CARGO_BUILD_OUT");
-                }
-            )*
-        });
+    ( bins: ) => {{}};
+    ( bins: $($fmt_arg:tt),* ) => {{
+        $crate::rustc_link_arg_bins(format!($($fmt_arg),*));
+    }};
+    ( bins: $($($fmt_arg:tt),* $(,)? );* ) => {{
+        $(
+            $crate::rustc_link_arg!(bins: $($fmt_arg),*);
+        )*
     }};
 
-    ( bin $bin_name:tt : $($($fmt_arg:tt),*);* ) => {{
-        $crate::build_out::CARGO_BUILD_OUT.with_borrow_mut(|out| {
-            $(
-                if const { !matches!(stringify!($($fmt_arg),*).as_bytes(), b"") } {
-                    write!(out, "cargo::rustc-link-arg-bin=").expect("Unable to write to CARGO_BUILD_OUT");
-                    write!(out, "{}=", $bin_name).expect("Unable to write to CARGO_BUILD_OUT");
-                    writeln!(out, $($fmt_arg),*).expect("Unable to write to CARGO_BUILD_OUT");
-                }
-            )*
-        });
+    ( bin $bin_name:tt : ) => {{}};
+    ( bin $bin_name:tt : $($fmt_arg:tt),* ) => {{
+        $crate::rustc_link_arg_bin($bin_name, format!($($fmt_arg),*));
+    }};
+    ( bin $bin_name:tt : $($($fmt_arg:tt),* $(,)? );* ) => {{
+        $(
+            $crate::rustc_link_arg!(bin $bin_name: $($fmt_arg),*);
+        )*
     }};
 
-    ( cdylib: $($($fmt_arg:tt),*);* ) => {{
-        $crate::build_out::CARGO_BUILD_OUT.with_borrow_mut(|out| {
-            $(
-                if const { !matches!(stringify!($($fmt_arg),*).as_bytes(), b"") } {
-                    write!(out, "cargo::rustc-link-arg-cdylib=").expect("Unable to write to CARGO_BUILD_OUT");
-                    writeln!(out, $($fmt_arg),*).expect("Unable to write to CARGO_BUILD_OUT");
-                }
-            )*
-        });
+    ( cdylib: ) => {{}};
+    ( cdylib: $($fmt_arg:tt),* ) => {{
+        $crate::rustc_link_arg_cdylib(format!($($fmt_arg),*));
+    }};
+    ( cdylib: $($($fmt_arg:tt),* $(,)? );* ) => {{
+        $(
+            $crate::rustc_link_arg!(cdylib: $($fmt_arg),*);
+        )*
     }};
 
-    ( examples: $($($fmt_arg:tt),*);* ) => {{
-        $crate::build_out::CARGO_BUILD_OUT.with_borrow_mut(|out| {
-            $(
-                if const { !matches!(stringify!($($fmt_arg),*).as_bytes(), b"") } {
-                    write!(out, "cargo::rustc-link-arg-examples=").expect("Unable to write to CARGO_BUILD_OUT");
-                    writeln!(out, $($fmt_arg),*).expect("Unable to write to CARGO_BUILD_OUT");
-                }
-            )*
-        });
+    ( examples: ) => {{}};
+    ( examples: $($fmt_arg:tt),* ) => {{
+        $crate::rustc_link_arg_examples(format!($($fmt_arg),*));
+    }};
+    ( examples: $($($fmt_arg:tt),* $(,)? );* ) => {{
+        $(
+            $crate::rustc_link_arg!(examples: $($fmt_arg),*);
+        )*
     }};
 
-    ( tests: $($($fmt_arg:tt),*);* ) => {{
-        $crate::build_out::CARGO_BUILD_OUT.with_borrow_mut(|out| {
-            $(
-                if const { !matches!(stringify!($($fmt_arg),*).as_bytes(), b"") } {
-                    write!(out, "cargo::rustc-link-arg-tests=").expect("Unable to write to CARGO_BUILD_OUT");
-                    writeln!(out, $($fmt_arg),*).expect("Unable to write to CARGO_BUILD_OUT");
-                }
-            )*
-        });
+    ( tests: ) => {{}};
+    ( tests: $($fmt_arg:tt),* ) => {{
+        $crate::rustc_link_arg_tests(format!($($fmt_arg),*));
+    }};
+    ( tests: $($($fmt_arg:tt),* $(,)? );* ) => {{
+        $(
+            $crate::rustc_link_arg!(tests: $($fmt_arg),*);
+        )*
     }};
 }
 
@@ -275,89 +262,27 @@ macro_rules! rustc_link_arg {
 #[macro_export]
 macro_rules! rustc_link_lib {
 
-    () => {};
+    ( static $(: $mod1:tt $(, $mod_rem:tt )* )? = ) => {{}};
+    ( static $(: $mod1:tt $(, $mod_rem:tt )* )? = $($fmt_arg:tt),*) => {{
+        let mut modifiers = String::new();
+        $(
+            modifiers.push(':');
+            modifiers.push_str(&$mod1);
+            $(
+                modifiers.push(',');
+                modifiers.push_str(&$mod_rem);
+            )*
+        )?
+        let user_string = format!($($fmt_arg),*);
 
+        $crate::rustc_link_lib_static(format!("{}{}", modifiers, user_string));
+    }};
     ( static $(: $mod1:tt $(, $mod_rem:tt )* )? = $( $($fmt_arg:tt),* );*) => {{
-        $crate::build_out::CARGO_BUILD_OUT.with(|out| {
-            let closure = move || {
-                let mut out = out.borrow_mut();
-                write!(out, "cargo::rustc-link-lib=static").expect("Unable to write to CARGO_BUILD_OUT");
-                $(
-                    write!(out, ":").expect("Unable to write to CARGO_BUILD_OUT");
-                    write!(out, $mod1).expect("Unable to write to CARGO_BUILD_OUT");
-                    $(
-                        write!(out, ",{}", $mod_rem).expect("Unable to write to CARGO_BUILD_OUT");
-                    )*
-                )?
-                write!(out, "=").expect("Unable to write to CARGO_BUILD_OUT");
-            };
-
-            $(
-                if const { !matches!(stringify!($($fmt_arg),*).as_bytes(), b"") } {
-                    closure();
-                    writeln!(out.borrow_mut(), $($fmt_arg),*).expect("Unable to write to CARGO_BUILD_OUT");
-                }
-            )*
-        });
-    }};
-
-    ( dylib $(: $mod1:tt $(, $mod_rem:tt )* )? = $( $($fmt_arg:tt),* );*) => {{
-        $crate::build_out::CARGO_BUILD_OUT.with(|out| {
-            let closure = move || {
-                let mut out = out.borrow_mut();
-                write!(out, "cargo::rustc-link-lib=dylib").expect("Unable to write to CARGO_BUILD_OUT");
-                $(
-                    write!(out, ":").expect("Unable to write to CARGO_BUILD_OUT");
-                    write!(out, $mod1).expect("Unable to write to CARGO_BUILD_OUT");
-                    $(
-                        write!(out, ",{}", $mod_rem).expect("Unable to write to CARGO_BUILD_OUT");
-                    )*
-                )?
-                write!(out, "=").expect("Unable to write to CARGO_BUILD_OUT");
-            };
-
-            $(
-                if const { !matches!(stringify!($($fmt_arg),*).as_bytes(), b"") } {
-                    closure();
-                    writeln!(out.borrow_mut(), $($fmt_arg),*).expect("Unable to write to CARGO_BUILD_OUT");
-                }
-            )*
-        });
-    }};
-
-    ( framework $(: $mod1:tt $(, $mod_rem:tt )* )? = $( $($fmt_arg:tt),* );*) => {{
-        $crate::build_out::CARGO_BUILD_OUT.with(|out| {
-            let closure = move || {
-                let mut out = out.borrow_mut();
-                write!(out, "cargo::rustc-link-lib=framework").expect("Unable to write to CARGO_BUILD_OUT");
-                $(
-                    write!(out, ":").expect("Unable to write to CARGO_BUILD_OUT");
-                    write!(out, $mod1).expect("Unable to write to CARGO_BUILD_OUT");
-                    $(
-                        write!(out, ",{}", $mod_rem).expect("Unable to write to CARGO_BUILD_OUT");
-                    )*
-                )?
-                write!(out, "=").expect("Unable to write to CARGO_BUILD_OUT");
-            };
-
-            $(
-                if const { !matches!(stringify!($($fmt_arg),*).as_bytes(), b"") } {
-                    closure();
-                    writeln!(out.borrow_mut(), $($fmt_arg),*).expect("Unable to write to CARGO_BUILD_OUT");
-                }
-            )*
-        });
-    }};
-
-    ( $( $($fmt_arg:tt),* );* ) => {{
-        $crate::build_out::CARGO_BUILD_OUT.with_borrow_mut(|out| {
-            $(
-                if const { !matches!(stringify!($($fmt_arg),*).as_bytes(), b"") } {
-                    write!(out, "cargo::rustc-link-lib=").expect("Unable to write to CARGO_BUILD_OUT");
-                    writeln!(out, $($fmt_arg),*).expect("Unable to write to CARGO_BUILD_OUT");
-                }
-            )*
-        });
+        /*
+        $(
+            $crate::rustc_link_lib!(static $(: $mod1 $(, $mod_rem )* = )? );
+        )*
+        */
     }};
 }
 
