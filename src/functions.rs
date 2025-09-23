@@ -515,8 +515,7 @@ where
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
             if !modifiers.is_empty() {
                 writeln!(out, "cargo::rustc-link-lib=dylib:{modifiers}={lib}").expect(ERR_MSG)
-            }
-            else {
+            } else {
                 writeln!(out, "cargo::rustc-link-lib=dylib={lib}").expect(ERR_MSG)
             }
         });
@@ -569,8 +568,7 @@ where
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
             if !modifiers.is_empty() {
                 writeln!(out, "cargo::rustc-link-lib=static:{modifiers}={lib}").expect(ERR_MSG)
-            }
-            else {
+            } else {
                 writeln!(out, "cargo::rustc-link-lib=static={lib}").expect(ERR_MSG)
             }
         });
@@ -625,8 +623,7 @@ pub fn rustc_link_lib_framework<M, I>(
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
             if !modifiers.is_empty() {
                 writeln!(out, "cargo::rustc-link-lib=framework:{modifiers}={lib}").expect(ERR_MSG)
-            }
-            else {
+            } else {
                 writeln!(out, "cargo::rustc-link-lib=framework={lib}").expect(ERR_MSG)
             }
         });
@@ -1141,8 +1138,7 @@ where
     CARGO_BUILD_OUT.with_borrow_mut(|out| {
         if values.is_empty() {
             writeln!(out, "cargo::rustc-check-cfg=cfg({name})").expect(ERR_MSG);
-        }
-        else {
+        } else {
             writeln!(out, "cargo::rustc-check-cfg=cfg({name}, values({values}))").expect(ERR_MSG);
         }
     });

@@ -1,3 +1,0 @@
-control_brace_style = "ClosingNextLine"
-imports_granularity = "Module"
-group_imports = "StdExternalCrate"
