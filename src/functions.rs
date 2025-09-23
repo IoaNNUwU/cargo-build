@@ -16,6 +16,9 @@ const ERR_MSG: &str = "Unable to write to CARGO_BUILD_OUT";
 /// cargo_build::rerun_if_changed("docs_folder");
 /// cargo_build::rerun_if_changed("src/main.c");
 ///
+/// // Always rerun when non-existent file chosen
+/// cargo_build::rerun_if_changed("always");
+///
 /// // `String` can be used as argument
 /// let platform: String = std::env::var("OS").unwrap_or("linux".to_string());
 /// let config_path: String = format!("{platform}-config.toml");
@@ -47,12 +50,11 @@ where
     for file_path in file_paths.into() {
         let path = file_path.as_ref();
 
-        match path.to_str() {
-            Some(path) => assert!(
+        if let Some(path) = path.to_str() {
+            assert!(
                 !path.contains('\n'),
                 "Paths containing newlines cannot be used in the build scripts"
-            ),
-            None => {}
+            )
         }
         let path = path.display();
 
@@ -422,7 +424,7 @@ where
 ///     "nghttp2",
 ///     "static=libssl",
 ///     "dylib=libcrypto",
-///     "static:+whole-archive=mylib:renamed_lib",
+///     "static:+whole-archive,-bundle,-verbatim=mylib:renamed_lib",
 /// ]);
 /// ```
 ///
@@ -470,9 +472,12 @@ where
 /// [`rustc_link_lib`] alternative that automatically passes `dylib=`.
 ///
 /// ```rust
-/// cargo_build::rustc_link_lib_dylib(["nghttp2", "libssl", "libcrypto"]);
+/// cargo_build::rustc_link_lib_dylib([], ["nghttp2", "libssl", "libcrypto"]);
 ///
-/// cargo_build::rustc_link_lib_dylib(":+whole-archive=mylib:renamed_lib");
+/// cargo_build::rustc_link_lib_dylib(
+///     ["+whole_archive", "-bundle", "-verbatim"],
+///     ["nghttp2", "libssl", "libcrypto"],
+/// );
 /// ```
 ///
 /// See also [`rustc_link_lib!` macro](`crate::rustc_link_lib!`) with compile-time checked
@@ -480,11 +485,25 @@ where
 ///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-lib>
 #[allow(private_bounds)]
-pub fn rustc_link_lib_dylib<I>(lib_names: impl Into<VarArg<I>>)
+pub fn rustc_link_lib_dylib<M, I>(modifiers: impl Into<VarArg<M>>, lib_names: impl Into<VarArg<I>>)
 where
     I: IntoIterator,
     I::Item: AsRef<str>,
+    M: IntoIterator<Item = I::Item>,
 {
+    let modifiers: String = modifiers
+        .into()
+        .into_iter()
+        .map(|e| e.as_ref().to_string())
+        .inspect(|e| {
+            assert!(
+                !e.contains('\n'),
+                "Link modifiers containing newlines cannot be used in build scripts"
+            );
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+
     for lib in lib_names.into() {
         let lib = lib.as_ref();
 
@@ -494,7 +513,12 @@ where
         );
 
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
-            writeln!(out, "cargo::rustc-link-lib=dylib={lib}").expect(ERR_MSG)
+            if !modifiers.is_empty() {
+                writeln!(out, "cargo::rustc-link-lib=dylib:{modifiers}={lib}").expect(ERR_MSG)
+            }
+            else {
+                writeln!(out, "cargo::rustc-link-lib=dylib={lib}").expect(ERR_MSG)
+            }
         });
     }
 }
@@ -502,9 +526,12 @@ where
 /// [`rustc_link_lib`] alternative that automatically passes `static=`.
 ///
 /// ```rust
-/// cargo_build::rustc_link_lib_static(["nghttp2", "libssl", "libcrypto"]);
+/// cargo_build::rustc_link_lib_static([], ["nghttp2", "libssl", "libcrypto"]);
 ///
-/// cargo_build::rustc_link_lib_static(":+whole-archive=mylib:renamed_lib");
+/// cargo_build::rustc_link_lib_static(
+///     ["+whole_archive", "-bundle", "-verbatim"],
+///     ["nghttp2", "libssl", "libcrypto"],
+/// );
 /// ```
 ///
 /// See also [`rustc_link_lib!` macro](`crate::rustc_link_lib!`) with compile-time checked
@@ -512,11 +539,25 @@ where
 ///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-lib>
 #[allow(private_bounds)]
-pub fn rustc_link_lib_static<I>(lib_names: impl Into<VarArg<I>>)
+pub fn rustc_link_lib_static<M, I>(modifiers: impl Into<VarArg<M>>, lib_names: impl Into<VarArg<I>>)
 where
     I: IntoIterator,
     I::Item: AsRef<str>,
+    M: IntoIterator<Item = I::Item>,
 {
+    let modifiers: String = modifiers
+        .into()
+        .into_iter()
+        .map(|e| e.as_ref().to_string())
+        .inspect(|e| {
+            assert!(
+                !e.contains('\n'),
+                "Link modifiers containing newlines cannot be used in build scripts"
+            );
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+
     for lib in lib_names.into() {
         let lib = lib.as_ref();
 
@@ -526,7 +567,12 @@ where
         );
 
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
-            writeln!(out, "cargo::rustc-link-lib=static={lib}").expect(ERR_MSG)
+            if !modifiers.is_empty() {
+                writeln!(out, "cargo::rustc-link-lib=static:{modifiers}={lib}").expect(ERR_MSG)
+            }
+            else {
+                writeln!(out, "cargo::rustc-link-lib=static={lib}").expect(ERR_MSG)
+            }
         });
     }
 }
@@ -534,9 +580,12 @@ where
 /// [`rustc_link_lib`] alternative that automatically passes `framework=`.
 ///
 /// ```rust
-/// cargo_build::rustc_link_lib_framework(["nghttp2", "libssl", "libcrypto"]);
+/// cargo_build::rustc_link_lib_framework([], ["nghttp2", "libssl", "libcrypto"]);
 ///
-/// cargo_build::rustc_link_lib_framework(":+whole-archive=mylib:renamed_lib");
+/// cargo_build::rustc_link_lib_framework(
+///     ["+whole_archive", "-bundle", "-verbatim"],
+///     ["nghttp2", "libssl", "libcrypto"],
+/// );
 /// ```
 ///
 /// See also [`rustc_link_lib!` macro](`crate::rustc_link_lib!`) with compile-time checked
@@ -544,11 +593,27 @@ where
 ///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-link-lib>
 #[allow(private_bounds)]
-pub fn rustc_link_lib_framework<I>(lib_names: impl Into<VarArg<I>>)
-where
+pub fn rustc_link_lib_framework<M, I>(
+    modifiers: impl Into<VarArg<M>>,
+    lib_names: impl Into<VarArg<I>>,
+) where
     I: IntoIterator,
     I::Item: AsRef<str>,
+    M: IntoIterator<Item = I::Item>,
 {
+    let modifiers: String = modifiers
+        .into()
+        .into_iter()
+        .map(|e| e.as_ref().to_string())
+        .inspect(|e| {
+            assert!(
+                !e.contains('\n'),
+                "Link modifiers containing newlines cannot be used in build scripts"
+            );
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+
     for lib in lib_names.into() {
         let lib = lib.as_ref();
 
@@ -558,7 +623,12 @@ where
         );
 
         CARGO_BUILD_OUT.with_borrow_mut(|out| {
-            writeln!(out, "cargo::rustc-link-lib=framework={lib}").expect(ERR_MSG)
+            if !modifiers.is_empty() {
+                writeln!(out, "cargo::rustc-link-lib=framework:{modifiers}={lib}").expect(ERR_MSG)
+            }
+            else {
+                writeln!(out, "cargo::rustc-link-lib=framework={lib}").expect(ERR_MSG)
+            }
         });
     }
 }
@@ -600,12 +670,11 @@ where
     for path in lib_paths.into() {
         let path = path.as_ref();
 
-        match path.to_str() {
-            Some(path) => assert!(
+        if let Some(path) = path.to_str() {
+            assert!(
                 !path.contains('\n'),
                 "Library paths containing newlines cannot be used in the build scripts"
-            ),
-            None => {}
+            )
         }
         let path = path.display();
 
@@ -634,12 +703,11 @@ where
     for path in lib_paths.into() {
         let path = path.as_ref();
 
-        match path.to_str() {
-            Some(path) => assert!(
+        if let Some(path) = path.to_str() {
+            assert!(
                 !path.contains('\n'),
                 "Library paths containing newlines cannot be used in the build scripts"
-            ),
-            None => {}
+            )
         }
         let path = path.display();
 
@@ -668,12 +736,11 @@ where
     for path in lib_paths.into() {
         let path = path.as_ref();
 
-        match path.to_str() {
-            Some(path) => assert!(
+        if let Some(path) = path.to_str() {
+            assert!(
                 !path.contains('\n'),
                 "Library paths containing newlines cannot be used in the build scripts"
-            ),
-            None => {}
+            )
         }
         let path = path.display();
 
@@ -702,12 +769,11 @@ where
     for path in lib_paths.into() {
         let path = path.as_ref();
 
-        match path.to_str() {
-            Some(path) => assert!(
+        if let Some(path) = path.to_str() {
+            assert!(
                 !path.contains('\n'),
                 "Library paths containing newlines cannot be used in the build scripts"
-            ),
-            None => {}
+            )
         }
         let path = path.display();
 
@@ -736,12 +802,11 @@ where
     for path in lib_paths.into() {
         let path = path.as_ref();
 
-        match path.to_str() {
-            Some(path) => assert!(
+        if let Some(path) = path.to_str() {
+            assert!(
                 !path.contains('\n'),
                 "Library paths containing newlines cannot be used in the build scripts"
-            ),
-            None => {}
+            )
         }
         let path = path.display();
 
@@ -770,12 +835,11 @@ where
     for path in lib_paths.into() {
         let path = path.as_ref();
 
-        match path.to_str() {
-            Some(path) => assert!(
+        if let Some(path) = path.to_str() {
+            assert!(
                 !path.contains('\n'),
                 "Library paths containing newlines cannot be used in the build scripts"
-            ),
-            None => {}
+            )
         }
         let path = path.display();
 
@@ -892,7 +956,7 @@ where
 ///
 /// <https://doc.rust-lang.org/cargo/reference/build-scripts.html#rustc-cfg>
 #[allow(private_bounds)]
-pub fn rustc_cfg<'a>(cfg: impl Into<RustcCfg<'a>>) {
+pub fn rustc_cfg(cfg: impl Into<RustcCfg>) {
     let RustcCfg { name, value } = cfg.into();
 
     assert!(
@@ -938,31 +1002,67 @@ pub fn rustc_cfg<'a>(cfg: impl Into<RustcCfg<'a>>) {
 /// #[cfg(api_version="2")]
 /// fn get_users() -> Vec<String> { todo!() }
 /// ```
-struct RustcCfg<'a> {
-    name: &'a str,
-    value: Option<&'a str>,
+struct RustcCfg {
+    name: String,
+    value: Option<String>,
 }
 
-impl<'a> From<&'a str> for RustcCfg<'a> {
-    fn from(name: &'a str) -> Self {
+impl From<&str> for RustcCfg {
+    fn from(name: &str) -> Self {
+        Self {
+            name: name.to_string(),
+            value: None,
+        }
+    }
+}
+
+impl From<&String> for RustcCfg {
+    fn from(name: &String) -> Self {
+        Self {
+            name: name.to_string(),
+            value: None,
+        }
+    }
+}
+
+impl From<String> for RustcCfg {
+    fn from(name: String) -> Self {
         Self { name, value: None }
     }
 }
 
-impl<'a> From<(&'a str, &'a str)> for RustcCfg<'a> {
-    fn from((name, value): (&'a str, &'a str)) -> Self {
+impl From<(&str, &str)> for RustcCfg {
+    fn from((name, value): (&str, &str)) -> Self {
+        Self {
+            name: name.to_string(),
+            value: Some(value.to_string()),
+        }
+    }
+}
+
+impl From<(String, &str)> for RustcCfg {
+    fn from((name, value): (String, &str)) -> Self {
         Self {
             name,
+            value: Some(value.to_string()),
+        }
+    }
+}
+
+impl From<(&str, String)> for RustcCfg {
+    fn from((name, value): (&str, String)) -> Self {
+        Self {
+            name: name.to_string(),
             value: Some(value),
         }
     }
 }
 
-impl<'a> From<(&'a str,)> for RustcCfg<'a> {
-    fn from(name: (&'a str,)) -> Self {
+impl From<(String, String)> for RustcCfg {
+    fn from((name, value): (String, String)) -> Self {
         Self {
-            name: name.0,
-            value: None,
+            name,
+            value: Some(value),
         }
     }
 }
@@ -1041,7 +1141,8 @@ where
     CARGO_BUILD_OUT.with_borrow_mut(|out| {
         if values.is_empty() {
             writeln!(out, "cargo::rustc-check-cfg=cfg({name})").expect(ERR_MSG);
-        } else {
+        }
+        else {
             writeln!(out, "cargo::rustc-check-cfg=cfg({name}, values({values}))").expect(ERR_MSG);
         }
     });
@@ -1196,8 +1297,9 @@ pub fn warning(msg: &str) {
 /// ```rust
 /// // build.rs
 /// cargo_build::metadata("LINKAGE", "static");
+///
 /// cargo_build::rustc_link_search_native(["libs"]);
-/// cargo_build::rustc_link_lib_static(["foo"]);
+/// cargo_build::rustc_link_lib_static([], ["foo"]);
 /// ```
 ///
 /// See also [`metadata!` macro](`crate::metadata!`) with compile-time checked

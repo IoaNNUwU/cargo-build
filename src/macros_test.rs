@@ -68,7 +68,7 @@ fn rerun_if_changed_test_syntax() {
     let _a: () = cargo_build::rerun_if_changed!("hello.txt");
 
     let _a: () = cargo_build::rerun_if_changed!("hello.txt"; );
-    let _a: () = cargo_build::rerun_if_changed!("hello.txt", );
+    let _a: () = cargo_build::rerun_if_changed!("hello.txt",);
 
     let _a: () = cargo_build::rerun_if_changed!(
         "hello.txt";
@@ -86,7 +86,6 @@ fn rerun_if_changed_test_syntax() {
     cargo_build::rerun_if_changed!("hello{}", ".txt");
     cargo_build::rerun_if_changed!("hello{}", ".txt"; );
 }
-
 
 #[test]
 fn rerun_if_env_changed_test() {
@@ -140,46 +139,46 @@ fn rustc_link_arg_test_syntax() {
 
     cargo_build::rustc_link_arg!("hello");
     cargo_build::rustc_link_arg!("hello"; );
-    cargo_build::rustc_link_arg!("hello", );
+    cargo_build::rustc_link_arg!("hello",);
     cargo_build::rustc_link_arg!("hello"; "world" );
     cargo_build::rustc_link_arg!("hello"; "world"; );
     cargo_build::rustc_link_arg!("hello"; "world", );
-    
+
     cargo_build::rustc_link_arg!(benches: "hello");
     cargo_build::rustc_link_arg!(benches: "hello"; );
     cargo_build::rustc_link_arg!(benches: "hello", );
     cargo_build::rustc_link_arg!(benches: "hello"; "world" );
     cargo_build::rustc_link_arg!(benches: "hello"; "world"; );
     cargo_build::rustc_link_arg!(benches: "hello"; "world", );
-    
+
     cargo_build::rustc_link_arg!(bins: "hello");
     cargo_build::rustc_link_arg!(bins: "hello"; );
     cargo_build::rustc_link_arg!(bins: "hello", );
     cargo_build::rustc_link_arg!(bins: "hello"; "world" );
     cargo_build::rustc_link_arg!(bins: "hello"; "world"; );
     cargo_build::rustc_link_arg!(bins: "hello"; "world", );
-    
+
     cargo_build::rustc_link_arg!(bin "client": "hello");
     cargo_build::rustc_link_arg!(bin "client": "hello"; );
     cargo_build::rustc_link_arg!(bin "client": "hello", );
     cargo_build::rustc_link_arg!(bin "client": "hello"; "world" );
     cargo_build::rustc_link_arg!(bin "client": "hello"; "world"; );
     cargo_build::rustc_link_arg!(bin "client": "hello"; "world", );
-    
+
     cargo_build::rustc_link_arg!(cdylib: "hello");
     cargo_build::rustc_link_arg!(cdylib: "hello"; );
     cargo_build::rustc_link_arg!(cdylib: "hello", );
     cargo_build::rustc_link_arg!(cdylib: "hello"; "world" );
     cargo_build::rustc_link_arg!(cdylib: "hello"; "world"; );
     cargo_build::rustc_link_arg!(cdylib: "hello"; "world", );
-    
+
     cargo_build::rustc_link_arg!(examples: "hello");
     cargo_build::rustc_link_arg!(examples: "hello"; );
     cargo_build::rustc_link_arg!(examples: "hello", );
     cargo_build::rustc_link_arg!(examples: "hello"; "world" );
     cargo_build::rustc_link_arg!(examples: "hello"; "world"; );
     cargo_build::rustc_link_arg!(examples: "hello"; "world", );
-    
+
     cargo_build::rustc_link_arg!(tests: "hello");
     cargo_build::rustc_link_arg!(tests: "hello"; );
     cargo_build::rustc_link_arg!(tests: "hello", );
@@ -353,13 +352,15 @@ fn rustc_link_lib_test_complex() {
 }
 
 #[test]
-fn rustc_link_lib_test_all() {
+fn rustc_link_lib_test_types() {
     let vec_out = TestWriteVecHandle::new();
     cargo_build::build_out::set(vec_out.clone());
 
-    // cargo_build::rustc_link_lib!(static: "+whole-archive" = "foo:{}", "renamed_foo" );
-    // cargo_build::rustc_link_lib!(dylib: "+whole-archive" = "foo:{}", "renamed_foo" );
-    // cargo_build::rustc_link_lib!(framework: "+whole-archive" = "foo:{}", "renamed_foo" );
+    cargo_build::rustc_link_lib!("foo:{}", "renamed_foo");
+
+    cargo_build::rustc_link_lib!(static: "+whole-archive", "-bundle" = "foo:{}", "renamed_foo" );
+    cargo_build::rustc_link_lib!(dylib: "+whole-archive", "-bundle" = "foo:{}", "renamed_foo" );
+    cargo_build::rustc_link_lib!(framework: "+whole-archive", "-bundle" = "foo:{}", "renamed_foo" );
 
     let out = vec_out.0.read().expect("Unable to aquire Read lock");
     let out: &str = str::from_utf8(&out).unwrap();
@@ -367,10 +368,56 @@ fn rustc_link_lib_test_all() {
     assert_eq!(
         out,
         "\
-                cargo::rustc-link-lib=static:+whole-archive=foo:renamed_foo\n\
-                cargo::rustc-link-lib=dylib:+whole-archive=foo:renamed_foo\n\
-                cargo::rustc-link-lib=framework:+whole-archive=foo:renamed_foo\n"
+                cargo::rustc-link-lib=foo:renamed_foo\n\
+                cargo::rustc-link-lib=static:+whole-archive,-bundle=foo:renamed_foo\n\
+                cargo::rustc-link-lib=dylib:+whole-archive,-bundle=foo:renamed_foo\n\
+                cargo::rustc-link-lib=framework:+whole-archive,-bundle=foo:renamed_foo\n"
     );
+}
+
+#[test]
+fn rustc_link_lib_test_syntax() {
+    cargo_build::rustc_link_lib!();
+
+    cargo_build::rustc_link_lib!("nghttp2");
+    cargo_build::rustc_link_lib!("nghttp2"; );
+    cargo_build::rustc_link_lib!("nghttp2",);
+    cargo_build::rustc_link_lib!("nghttp2"; "libssl" );
+    cargo_build::rustc_link_lib!("nghttp2"; "libssl"; );
+    cargo_build::rustc_link_lib!("nghttp2"; "libssl", );
+
+    cargo_build::rustc_link_lib!(static = );
+    cargo_build::rustc_link_lib!(static = "nghttp2");
+    cargo_build::rustc_link_lib!(static = "nghttp2"; );
+    cargo_build::rustc_link_lib!(static = "nghttp2", );
+    cargo_build::rustc_link_lib!(static = "nghttp2"; "libssl" );
+    cargo_build::rustc_link_lib!(static = "nghttp2"; "libssl"; );
+    cargo_build::rustc_link_lib!(static = "nghttp2"; "libssl", );
+
+    cargo_build::rustc_link_lib!(static: "+bundle" = "nghttp2"; "libssl", );
+    cargo_build::rustc_link_lib!(static: "+bundle", "+whole-archive" = "nghttp2"; "libssl", );
+
+    cargo_build::rustc_link_lib!(dylib = );
+    cargo_build::rustc_link_lib!(dylib = "nghttp2");
+    cargo_build::rustc_link_lib!(dylib = "nghttp2"; );
+    cargo_build::rustc_link_lib!(dylib = "nghttp2",);
+    cargo_build::rustc_link_lib!(dylib = "nghttp2"; "libssl" );
+    cargo_build::rustc_link_lib!(dylib = "nghttp2"; "libssl"; );
+    cargo_build::rustc_link_lib!(dylib = "nghttp2"; "libssl", );
+
+    cargo_build::rustc_link_lib!(dylib: "+bundle" = "nghttp2"; "libssl", );
+    cargo_build::rustc_link_lib!(dylib: "+bundle", "+whole-archive" = "nghttp2"; "libssl", );
+
+    cargo_build::rustc_link_lib!(framework = );
+    cargo_build::rustc_link_lib!(framework = "nghttp2");
+    cargo_build::rustc_link_lib!(framework = "nghttp2"; );
+    cargo_build::rustc_link_lib!(framework = "nghttp2",);
+    cargo_build::rustc_link_lib!(framework = "nghttp2"; "libssl" );
+    cargo_build::rustc_link_lib!(framework = "nghttp2"; "libssl"; );
+    cargo_build::rustc_link_lib!(framework = "nghttp2"; "libssl", );
+
+    cargo_build::rustc_link_lib!(framework: "+bundle" = "nghttp2"; "libssl", );
+    cargo_build::rustc_link_lib!(framework: "+bundle", "+whole-archive" = "nghttp2"; "libssl", );
 }
 
 #[test]
@@ -403,6 +450,85 @@ fn rustc_link_search_test() {
 }
 
 #[test]
+fn rustc_link_search_syntax_test() {
+    let vec_out = TestWriteVecHandle::new();
+
+    cargo_build::build_out::set(vec_out.clone());
+
+    cargo_build::rustc_link_search!("common_libs");
+    cargo_build::rustc_link_search!("common_libs"; );
+    cargo_build::rustc_link_search!("common_libs",);
+    cargo_build::rustc_link_search!("common_libs"; "more_libs");
+    cargo_build::rustc_link_search!("common_libs"; "more_libs"; );
+    cargo_build::rustc_link_search!("common_libs"; "more_libs", );
+
+    cargo_build::rustc_link_search!(dependency = "common_libs");
+    cargo_build::rustc_link_search!(dependency = "common_libs"; );
+    cargo_build::rustc_link_search!(dependency = "common_libs",);
+    cargo_build::rustc_link_search!(dependency = "common_libs"; "more_libs");
+    cargo_build::rustc_link_search!(dependency = "common_libs"; "more_libs"; );
+    cargo_build::rustc_link_search!(dependency = "common_libs"; "more_libs", );
+    cargo_build::rustc_link_search!(dependency : "common_libs");
+    cargo_build::rustc_link_search!(dependency : "common_libs"; );
+    cargo_build::rustc_link_search!(dependency : "common_libs", );
+    cargo_build::rustc_link_search!(dependency : "common_libs"; "more_libs");
+    cargo_build::rustc_link_search!(dependency : "common_libs"; "more_libs"; );
+    cargo_build::rustc_link_search!(dependency : "common_libs"; "more_libs", );
+
+    cargo_build::rustc_link_search!(crate = "common_libs");
+    cargo_build::rustc_link_search!(crate = "common_libs"; );
+    cargo_build::rustc_link_search!(crate = "common_libs",);
+    cargo_build::rustc_link_search!(crate = "common_libs"; "more_libs");
+    cargo_build::rustc_link_search!(crate = "common_libs"; "more_libs"; );
+    cargo_build::rustc_link_search!(crate = "common_libs"; "more_libs", );
+    cargo_build::rustc_link_search!(crate : "common_libs");
+    cargo_build::rustc_link_search!(crate : "common_libs"; );
+    cargo_build::rustc_link_search!(crate : "common_libs", );
+    cargo_build::rustc_link_search!(crate : "common_libs"; "more_libs");
+    cargo_build::rustc_link_search!(crate : "common_libs"; "more_libs"; );
+    cargo_build::rustc_link_search!(crate : "common_libs"; "more_libs", );
+
+    cargo_build::rustc_link_search!(native = "common_libs");
+    cargo_build::rustc_link_search!(native = "common_libs"; );
+    cargo_build::rustc_link_search!(native = "common_libs",);
+    cargo_build::rustc_link_search!(native = "common_libs"; "more_libs");
+    cargo_build::rustc_link_search!(native = "common_libs"; "more_libs"; );
+    cargo_build::rustc_link_search!(native = "common_libs"; "more_libs", );
+    cargo_build::rustc_link_search!(native : "common_libs");
+    cargo_build::rustc_link_search!(native : "common_libs"; );
+    cargo_build::rustc_link_search!(native : "common_libs", );
+    cargo_build::rustc_link_search!(native : "common_libs"; "more_libs");
+    cargo_build::rustc_link_search!(native : "common_libs"; "more_libs"; );
+    cargo_build::rustc_link_search!(native : "common_libs"; "more_libs", );
+
+    cargo_build::rustc_link_search!(framework = "common_libs");
+    cargo_build::rustc_link_search!(framework = "common_libs"; );
+    cargo_build::rustc_link_search!(framework = "common_libs",);
+    cargo_build::rustc_link_search!(framework = "common_libs"; "more_libs");
+    cargo_build::rustc_link_search!(framework = "common_libs"; "more_libs"; );
+    cargo_build::rustc_link_search!(framework = "common_libs"; "more_libs", );
+    cargo_build::rustc_link_search!(framework : "common_libs");
+    cargo_build::rustc_link_search!(framework : "common_libs"; );
+    cargo_build::rustc_link_search!(framework : "common_libs", );
+    cargo_build::rustc_link_search!(framework : "common_libs"; "more_libs");
+    cargo_build::rustc_link_search!(framework : "common_libs"; "more_libs"; );
+    cargo_build::rustc_link_search!(framework : "common_libs"; "more_libs", );
+
+    cargo_build::rustc_link_search!(all = "common_libs");
+    cargo_build::rustc_link_search!(all = "common_libs"; );
+    cargo_build::rustc_link_search!(all = "common_libs",);
+    cargo_build::rustc_link_search!(all = "common_libs"; "more_libs");
+    cargo_build::rustc_link_search!(all = "common_libs"; "more_libs"; );
+    cargo_build::rustc_link_search!(all = "common_libs"; "more_libs", );
+    cargo_build::rustc_link_search!(all : "common_libs");
+    cargo_build::rustc_link_search!(all : "common_libs"; );
+    cargo_build::rustc_link_search!(all : "common_libs", );
+    cargo_build::rustc_link_search!(all : "common_libs"; "more_libs");
+    cargo_build::rustc_link_search!(all : "common_libs"; "more_libs"; );
+    cargo_build::rustc_link_search!(all : "common_libs"; "more_libs", );
+}
+
+#[test]
 fn rustc_cfg_test_no_value() {
     let vec_out = TestWriteVecHandle::new();
 
@@ -429,6 +555,20 @@ fn rustc_cfg_test_value() {
     let out: &str = str::from_utf8(&out).unwrap();
 
     assert_eq!(out, "cargo::rustc-cfg=api_version=\"1\"\n");
+}
+
+#[test]
+fn rustc_cfg_syntax_test() {
+    cargo_build::rustc_cfg!("api_v1");
+
+    let string = String::from("api_v1");
+    cargo_build::rustc_cfg!(string);
+
+    cargo_build::rustc_cfg!("api" = "1");
+
+    let string1 = String::from("api_v1");
+    let string2 = String::from("api_v1");
+    cargo_build::rustc_cfg!(string1 = string2);
 }
 
 #[test]

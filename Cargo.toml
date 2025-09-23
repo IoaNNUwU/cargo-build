@@ -1,6 +1,6 @@
 [package]
 name = "cargo-build"
-version = "0.8.0"
+version = "1.0.0"
 edition = "2021"
 
 rust-version = "1.84"
@@ -8,7 +8,7 @@ rust-version = "1.84"
 authors = ["ioannuwu <https://github.com/IoaNNUwU>"]
 license= "MIT"
 
-description = "`cargo-build` is a wrapper around cargo instructions accesible in build.rs"
+description = "Wrapper around cargo instructions accesible in `build.rs` with better type safety and support for modern features. Includes functions by default. Macros are optional, but do provide better experience when there is need to do formatting and variable number of arguments at the same time which is ideal for DSLs."
 
 repository = "https://github.com/IoaNNUwU/cargo-build"
 homepage = "https://github.com/IoaNNUwU/cargo-build"

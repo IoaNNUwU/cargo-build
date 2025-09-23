@@ -1,14 +1,17 @@
 ## Cargo build
 
-#### `cargo-build` is a wrapper around cargo instructions accesible in `build.rs`
+#### `cargo-build` is a wrapper around cargo instructions accesible in `build.rs` with better type safety and support for modern features. 
 
-Add this crate as dependency
+Includes functions by default. Macros are optional, but do provide better experience when there is need to do formatting and variable number of arguments at the same time which is ideal for DSLs.
+
+Add this crate as build-dependency
+
 ```toml
 [build-dependencies]
-cargo-build = "0.7.3" # no macros
+cargo-build = "0.1.0" # no macros
 
 [build-dependencies]
-cargo-build = { version = "0.7.3", features = ["macros"] }
+cargo-build = { version = "0.1.0", features = ["macros"] }
 ```
 
 <https://doc.rust-lang.org/cargo/reference/build-scripts.html>

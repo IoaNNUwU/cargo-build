@@ -11,6 +11,13 @@ env:
 
 jobs:
 
+  fmt-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Fmt-check
+      run: cargo fmt --check
+
   build-linux:
     runs-on: ubuntu-latest
 

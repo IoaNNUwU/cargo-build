@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::io::{stdout, Write};
 
 thread_local! {
-    pub static CARGO_BUILD_OUT: RefCell<Box<dyn Write>> = RefCell::new(Box::new(stdout()));
+    pub(crate) static CARGO_BUILD_OUT: RefCell<Box<dyn Write>> = RefCell::new(Box::new(stdout()));
 }
 
 /// Use this function to set custom output stream for `cargo-build` commands.
